@@ -1,0 +1,13 @@
+dist/*
+build/*
+test/*
+web/*
+nbproject/*
+build.xml
+*.bak
+src/conf/*
+/catalog.xml
+/build/
+/dist/
+/nbproject/
+/test/
