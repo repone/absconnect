@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="https://webservices.abs-one.com/AbsConnectService/1.0"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+	xmlns:ota="http://www.opentravel.org/OTA/2003/05"
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:tns="https://webservices.abs-one.com/AbsConnectService/1.0"
+	xmlns:wsp="http://www.w3.org/ns/ws-policy"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+	xmlns:fi="http://java.sun.com/xml/ns/wsit/2006/09/policy/fastinfoset/service"
+	xmlns:tcp="http://java.sun.com/xml/ns/wsit/2006/09/policy/soaptcp/service"
+	xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+	xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702"
+	xmlns:sc="http://schemas.sun.com/2006/03/wss/server"
+	xmlns:wspp="http://java.sun.com/xml/ns/wsit/policy">
+
+	<!-- Abstract service description -->
+
+	<wsdl:types>
+		<xs:schema>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_ReadRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_ResRetrieveRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_NotifReportRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_NotifReportRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelAvailNotifRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelAvailNotifRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelAvailGetRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelAvailGetRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelRoomListRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelRoomListRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelInvCountRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelInvCountRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelRatePlanRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelRatePlanRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelRateAmountNotifRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelRateAmountNotifRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelResNotifRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelResNotifRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelDescriptiveInfoRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_HotelDescriptiveInfoRS.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_ProfileCreateRQ.xsd"/>
+			<xs:import namespace="http://www.opentravel.org/OTA/2003/05" schemaLocation="OTA_ProfileCreateRS.xsd"/>
+		</xs:schema>
+	</wsdl:types>
+
+	<!-- Reservations -->
+
+	<wsdl:message name="ReadRQ">
+		<wsdl:part element="ota:OTA_ReadRQ" name="ReadRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="ResRetrieveRS">
+		<wsdl:part element="ota:OTA_ResRetrieveRS" name="ResRetrieveRS_msg"/>
+	</wsdl:message>
+
+	<wsdl:message name="NotifReportRQ">
+		<wsdl:part element="ota:OTA_NotifReportRQ" name="NotifReportRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="NotifReportRS">
+		<wsdl:part element="ota:OTA_NotifReportRS" name="NotifReportRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelAvailNotif -->
+
+	<wsdl:message name="HotelAvailNotifRQ">
+		<wsdl:part element="ota:OTA_HotelAvailNotifRQ" name="HotelAvailNotifRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelAvailNotifRS">
+		<wsdl:part element="ota:OTA_HotelAvailNotifRS" name="HotelAvailNotifRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelAvailGet -->
+
+	<wsdl:message name="HotelAvailGetRQ">
+		<wsdl:part element="ota:OTA_HotelAvailGetRQ" name="HotelAvailGetRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelAvailGetRS">
+		<wsdl:part element="ota:OTA_HotelAvailGetRS" name="HotelAvailGetRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelRoomList -->
+
+	<wsdl:message name="HotelRoomListRQ">
+		<wsdl:part element="ota:OTA_HotelRoomListRQ" name="HotelRoomListRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelRoomListRS">
+		<wsdl:part element="ota:OTA_HotelRoomListRS" name="HotelRoomListRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelInvCount -->
+
+	<wsdl:message name="HotelInvCountRQ">
+		<wsdl:part element="ota:OTA_HotelInvCountRQ" name="HotelInvCountRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelInvCountRS">
+		<wsdl:part element="ota:OTA_HotelInvCountRS" name="HotelInvCountRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelRatePlan -->
+
+	<wsdl:message name="HotelRatePlanRQ">
+		<wsdl:part element="ota:OTA_HotelRatePlanRQ" name="HotelRatePlanRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelRatePlanRS">
+		<wsdl:part element="ota:OTA_HotelRatePlanRS" name="HotelRatePlanRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelRateAmountNotif -->
+
+	<wsdl:message name="HotelRateAmountNotifRQ">
+		<wsdl:part element="ota:OTA_HotelRateAmountNotifRQ" name="HotelRateAmountNotifRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelRateAmountNotifRS">
+		<wsdl:part element="ota:OTA_HotelRateAmountNotifRS" name="HotelRateAmountNotifRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelResNotif -->
+
+	<wsdl:message name="HotelResNotifRQ">
+		<wsdl:part element="ota:OTA_HotelResNotifRQ" name="HotelResNotifRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelResNotifRS">
+		<wsdl:part element="ota:OTA_HotelResNotifRS" name="HotelResNotifRS_msg"/>
+	</wsdl:message>
+
+	<!-- HotelDescriptiveInfo -->
+
+	<wsdl:message name="HotelDescriptiveInfoRQ">
+		<wsdl:part element="ota:OTA_HotelDescriptiveInfoRQ" name="HotelDescriptiveInfoRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="HotelDescriptiveInfoRS">
+		<wsdl:part element="ota:OTA_HotelDescriptiveInfoRS" name="HotelDescriptiveInfoRS_msg"/>
+	</wsdl:message>
+
+	<!-- ProfileCreate -->
+
+	<wsdl:message name="ProfileCreateRQ">
+		<wsdl:part element="ota:OTA_ProfileCreateRQ" name="ProfileCreateRQ_msg"/>
+	</wsdl:message>
+	<wsdl:message name="ProfileCreateRS">
+		<wsdl:part element="ota:OTA_ProfileCreateRS" name="ProfileCreateRS_msg"/>
+	</wsdl:message>
+
+	<!-- Port -->
+
+	<wsdl:portType name="AbsConnectPort">
+		<wsdl:operation name="OTA_Read">
+			<wsdl:input message="tns:ReadRQ"/>
+			<wsdl:output message="tns:ResRetrieveRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_NotifReport">
+			<wsdl:input message="tns:NotifReportRQ"/>
+			<wsdl:output message="tns:NotifReportRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelAvailNotif">
+			<wsdl:input message="tns:HotelAvailNotifRQ"/>
+			<wsdl:output message="tns:HotelAvailNotifRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelAvailGet">
+			<wsdl:input message="tns:HotelAvailGetRQ"/>
+			<wsdl:output message="tns:HotelAvailGetRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelRoomList">
+			<wsdl:input message="tns:HotelRoomListRQ"/>
+			<wsdl:output message="tns:HotelRoomListRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelInvCount">
+			<wsdl:input message="tns:HotelInvCountRQ"/>
+			<wsdl:output message="tns:HotelInvCountRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelRatePlan">
+			<wsdl:input message="tns:HotelRatePlanRQ"/>
+			<wsdl:output message="tns:HotelRatePlanRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelRateAmountNotif">
+			<wsdl:input message="tns:HotelRateAmountNotifRQ"/>
+			<wsdl:output message="tns:HotelRateAmountNotifRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelResNotif">
+			<wsdl:input message="tns:HotelResNotifRQ"/>
+			<wsdl:output message="tns:HotelResNotifRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_HotelDescriptiveInfo">
+			<wsdl:input message="tns:HotelDescriptiveInfoRQ"/>
+			<wsdl:output message="tns:HotelDescriptiveInfoRS"/>
+		</wsdl:operation>
+		<wsdl:operation name="OTA_ProfileCreate">
+			<wsdl:input message="tns:ProfileCreateRQ"/>
+			<wsdl:output message="tns:ProfileCreateRS"/>
+		</wsdl:operation>
+	</wsdl:portType>
+
+	<!-- Implementation binding -->
+
+	<wsdl:binding name="AbsConnectBinding" type="tns:AbsConnectPort">
+		<wsp:PolicyReference URI="#AbsConnectBindingPolicy"/>
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+			<wsdl:operation name="OTA_Read">
+				<soap:operation soapAction="urn:OTA_Read"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_NotifReport">
+				<soap:operation soapAction="urn:OTA_NotifReport"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelAvailNotif">
+				<soap:operation soapAction="urn:OTA_HotelAvailNotif"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelAvailGet">
+				<soap:operation soapAction="urn:OTA_HotelAvailGet"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelRoomList">
+				<soap:operation soapAction="urn:OTA_HotelRoomList"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelInvCount">
+				<soap:operation soapAction="urn:OTA_HotelInvCount"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelRatePlan">
+				<soap:operation soapAction="urn:OTA_HotelRatePlan"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+ 					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelRateAmountNotif">
+				<soap:operation soapAction="urn:OTA_HotelRateAmountNotif"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+ 					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelResNotif">
+				<soap:operation soapAction="urn:OTA_HotelResNotif"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+ 					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_HotelDescriptiveInfo">
+				<soap:operation soapAction="urn:OTA_HotelDescriptiveInfo"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+			<wsdl:operation name="OTA_ProfileCreate">
+				<soap:operation soapAction="urn:OTA_ProfileCreate"/>
+				<wsdl:input>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Input_Policy"/>
+				</wsdl:input>
+				<wsdl:output>
+					<soap:body use="literal"/>
+					<wsp:PolicyReference URI="#AbsConnectBinding_OTA_Read_Output_Policy"/>
+				</wsdl:output>
+			</wsdl:operation>
+	</wsdl:binding>
+
+	<wsdl:service name="AbsConnectService">
+		<wsdl:documentation>Interfaccia OTA2009A ABS-ONE</wsdl:documentation>
+		<wsdl:port name="AbsConnectServicePort" binding="tns:AbsConnectBinding">
+			<soap:address location="https://webservices.abs-one.com:8181/absconnect/AbsConnectService"/>
+		</wsdl:port>
+	</wsdl:service>
+
+	<!-- Policy -->
+
+	<wsp:Policy wsu:Id="AbsConnectBindingPolicy">
+		<wsp:ExactlyOne>
+			<wsp:All>
+				<wsam:Addressing wsp:Optional="false"/>
+				<sp:SupportingTokens>
+					<wsp:Policy>
+						<wsp:ExactlyOne>
+							<wsp:All>
+								<sp:UsernameToken sp:IncludeToken="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy/IncludeToken/AlwaysToRecipient">
+									<wsp:Policy>
+										<wsp:ExactlyOne>
+											<wsp:All>
+												<sp:WssUsernameToken10/>
+											</wsp:All>
+										</wsp:ExactlyOne>
+									</wsp:Policy>
+								</sp:UsernameToken>
+							</wsp:All>
+						</wsp:ExactlyOne>
+					</wsp:Policy>
+				</sp:SupportingTokens>
+			</wsp:All>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+
+	<wsp:Policy wsu:Id="AbsConnectBinding_OTA_Read_Input_Policy">
+		<wsp:ExactlyOne>
+			<wsp:All/>
+		</wsp:ExactlyOne>
+	</wsp:Policy>
+	<wsp:Policy wsu:Id="AbsConnectBinding_OTA_Read_Output_Policy">
+		<wsp:ExactlyOne>
+			<wsp:All/>
+		</wsp:ExactlyOne>
+ 	</wsp:Policy>
+</wsdl:definitions>
+

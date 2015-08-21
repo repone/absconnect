@@ -4,8 +4,7 @@ test/*
 web/*
 nbproject/*
 build.xml
-*.bak
-src/conf/*
+*.bak 
 /catalog.xml
 /build/
 /dist/
