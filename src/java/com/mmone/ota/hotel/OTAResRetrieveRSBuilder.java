@@ -116,7 +116,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         RESERVATION_STATUS_TO_MM_CODE.put(RESERVATION_STATUS_CONFIRMED_BY_MANAGEMENT_SOFTWARE, "Book");
     }
     public static final String DOWNLOAD_TYPE_ALL = "ALL";
-    public static final String DOWNLOAD_TYPE_ONLY_BOOKING = "ONLY_BOOKING";
+    public static final String DOWNLOAD_TYPE_ONLY_BOOKING = "only-booking";
     
     private DataSource ds;
     private OTAReadRQ request;
@@ -198,7 +198,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             if(reservationType.equals("debug_mmone")){
                 this.isDebug=true; 
                 this.downloadType=DOWNLOAD_TYPE_ALL;
-            } else if(reservationType.equals("only-booking")){
+            } else if(reservationType.equals(DOWNLOAD_TYPE_ONLY_BOOKING)){
                 this.downloadType=DOWNLOAD_TYPE_ONLY_BOOKING;
             }
         }

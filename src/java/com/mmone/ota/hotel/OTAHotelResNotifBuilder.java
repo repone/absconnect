@@ -3,10 +3,7 @@
  */
 package com.mmone.ota.hotel;
 
-import static com.mmone.ota.hotel.OTAHotelAvailNotifRSBuilder.XRPC_SET_ALLOTMENT_RESULT_ERROR;
-import com.sun.org.apache.xerces.internal.dom.DocumentImpl;
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 import java.beans.XMLEncoder;
 import java.io.ByteArrayOutputStream;
@@ -18,8 +15,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
@@ -29,21 +24,14 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.naming.InitialContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.xmlrpc.XmlRpcClient;
@@ -81,9 +69,6 @@ import org.opentravel.ota._2003._05.TotalType;
 import org.opentravel.ota._2003._05.WarningType;
 import org.opentravel.ota._2003._05.WarningsType;
 import org.opentravel.ota._2003._05.YesNoType;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  *
