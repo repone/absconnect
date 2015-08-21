@@ -98,7 +98,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     public static final String S_KEY_CIPHER = new String(KEY_CIPHER);
     public static final Map<String, String> RESERVATION_STATUS_TO_MM_CODE = new Hashtable<String, String>();
 
-    static {
+    static { 
 
         RESERVATION_STATUS_TO_MM_CODE.put(RESERVATION_STATUS_CODE_WAITING_TO_CONFIRM, "Hold");
         RESERVATION_STATUS_TO_MM_CODE.put(RESERVATION_STATUS_CODE_CONFIRMED, "Book");
