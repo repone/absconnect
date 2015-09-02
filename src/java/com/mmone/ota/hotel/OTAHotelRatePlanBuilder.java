@@ -22,6 +22,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
@@ -126,7 +127,7 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
         this.echoToken = request.getEchoToken();
         this.target = request.getTarget();
         this.version = request.getVersion();
-        
+ 
         if (!target.equals(Facilities.TARGET_PRODUCTION) && !target.equals(Facilities.TARGET_TEST)) {
             this.target = Facilities.TARGET_PRODUCTION;
             addError(Facilities.EWT_PROTOCOL_VIOLATION, Facilities.ERR_INVALID_REQUEST_CODE, "Target is invalid.");
@@ -210,14 +211,48 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
 
         for (OTAHotelRatePlanRQ.RatePlans.RatePlan ratePlan : lRatePlan) {
             List<RatePlanCandidatesType.RatePlanCandidate> lRatePlanCandidate = ratePlan.getRatePlanCandidates().getRatePlanCandidate();
-            for (RatePlanCandidatesType.RatePlanCandidate ratePlanCandidate : lRatePlanCandidate) {
-                buildRatePlans(ratePlanCandidate);
+            for (RatePlanCandidatesType.RatePlanCandidate ratePlanCandidate : lRatePlanCandidate) { 
+                String listId = ratePlanCandidate.getRatePlanCode().toString();
+                if(listId.equals(DOWNLOAD_RATES_LIST)){
+                    buildRatesList( listId );
+                } else{
+                    buildRatePlans(ratePlanCandidate);
+                }    
             }
         }
 
         return res;
     }
-
+    public static final String DOWNLOAD_RATES_LIST = "download-rates-list";
+    
+    private void buildRatesList(String listId ){
+        String sqlMl =  " select multirate_code from multirate " +
+                        " where   structure_id=? and multirate_status=1 and multirate_deleted=0";
+        List<Object>  listini=null;
+        try { 
+            listini = run.query(sqlMl, new ColumnListHandler ("multirate_code"), ihotelCode); 
+        } catch (Exception e) {
+            addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "Error loading rates");
+            return;
+        } 
+        
+        if(this.res.getRatePlans()==null) 
+            this.res.setRatePlans( new RatePlans() ); 
+        
+        this.res.getRatePlans().setHotelCode(hotelCode);
+        for (Object listino : listini) {
+            String sListino = (String) listino;
+            
+            HotelRatePlanType ratePlan = new HotelRatePlanType();
+            
+            ratePlan.setRatePlanCode(sListino);
+            
+            this.res
+                .getRatePlans()
+                .getRatePlan().add(ratePlan) ;
+        }
+        
+    }
     private void setHotelCode() {
         try {
             hotelCode = request.getRatePlans().getRatePlan().get(0).getRatePlanCandidates().getRatePlanCandidate().get(0).getHotelRefs().getHotelRef().get(0).getHotelCode();
@@ -271,7 +306,7 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
                      
                 } else {
                     if(this.needBooking){ 
-                        String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
+                        String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=? and multirate_status=1 and multirate_deleted=0";
                         try {
                             ilistId = (Integer)run.query(sqlMl, new ScalarHandler("multirate_id"), listId, ihotelCode); 
                         } catch (Exception e) {
