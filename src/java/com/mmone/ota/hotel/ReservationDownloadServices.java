@@ -104,7 +104,7 @@ public class ReservationDownloadServices {
             + "           OR   (last_check_date IS NULL) "
             + "        ) "
             + "        AND structure_id = ? "
-            + "        AND (reservation_type in(1,3)) " 
+            + "        AND (reservation_type=1) " 
             + "";
      
      public static String SELECT_RESERVATIONS = ""
@@ -128,7 +128,7 @@ public class ReservationDownloadServices {
             + "           OR   (last_check_date IS NULL) "
             + "        ) "
             + "        AND structure_id = ? "
-            + "        AND (reservation_type in(1,3) ) "
+            + "        AND (reservation_type=1) "
             + "        AND (reservation.portal_id>=? OR reservation.portal_id>0)  "
            // + "        AND (reservation.portal_id=?) "
             + "";
@@ -153,7 +153,7 @@ public class ReservationDownloadServices {
             + "           OR   (last_check_date IS NULL) "
             + "        ) "
             + "        AND structure_id = ? "
-            + "        AND (reservation_type in(1,2,3)) "
+            + "        AND (reservation_type=1 OR reservation_type=2) "
             + "        AND (reservation.portal_id>=? OR reservation.portal_id>0)  "
            // + "        AND (reservation.portal_id=?) "
             + "";
