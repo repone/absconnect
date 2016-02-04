@@ -36,7 +36,7 @@ import org.opentravel.ota._2003._05.HotelReservationType;
  *
  */
 public class ReservationDownloadServices {
-
+    public static final int DOWNLOAD_LIMIT = 250;
     public static final String SQL_DELETE_RESERVATION_DOWNLOAD_REQUEST_RECORD = ""
             + " DELETE FROM ota_reservation_download_request"
             + " WHERE request_token=? "
@@ -342,9 +342,9 @@ public class ReservationDownloadServices {
 
         try {
             if (lastCheckDate == null) {
-                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, confirmationNumber, reservationId, reservationId, today);
+                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, confirmationNumber.substring(0,30), reservationId, reservationId, today);
             } else {
-                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD, contextId, confirmationNumber, reservationId, lastCheckDate, today);
+                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD, contextId, confirmationNumber.substring(0,30), reservationId, lastCheckDate, today);
             }
             return;
         } catch (SQLException e) {
@@ -372,13 +372,20 @@ public class ReservationDownloadServices {
 
         //Connection conn = ds.getConnection();
         //conn.setAutoCommit(false);
+        int resTokenCounter=0;
         if(resIdType.equals(  Facilities.RESID_TYPE_PMS    )){
             for (Map<String, Object> record : reservetions){ 
-                insertOrUpdateDownloadRecordCommitRequired(ds, dw.get("context_id"), confirmation_number, record.get("reservation_id"));
+                resTokenCounter++;
+                if(resTokenCounter>ReservationDownloadServices.DOWNLOAD_LIMIT)
+                    break;
+                insertOrUpdateDownloadRecordCommitRequired(ds, dw.get("context_id"), confirmation_number, record.get("reservation_id"));     
             }
             deleteReservationRequestRecordCommitRequired(ds, token);
         }else{
             for (Map<String, Object> record : reservetions) {
+                resTokenCounter++;
+                if(resTokenCounter>ReservationDownloadServices.DOWNLOAD_LIMIT)
+                    break;
                 String resNumber = (String)record.get("reservation_number");    
                 if(confirmation_number.equals( resNumber ) ){
                     insertOrUpdateDownloadRecordCommitRequired(ds, dw.get("context_id"), confirmation_number, record.get("reservation_id"));

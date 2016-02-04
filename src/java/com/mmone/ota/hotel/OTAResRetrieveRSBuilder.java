@@ -117,6 +117,8 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     }
     public static final String DOWNLOAD_TYPE_ALL = "ALL";
     public static final String DOWNLOAD_TYPE_ONLY_BOOKING = "only-booking";
+    public static final String DOWNLOAD_TYPE_LIMITED = "download-limited";
+    
     
     private DataSource ds;
     private OTAReadRQ request;
@@ -198,6 +200,8 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             if(reservationType.equals("debug_mmone")){
                 this.isDebug=true; 
                 this.downloadType=DOWNLOAD_TYPE_ALL;
+            } else if(reservationType.equals(DOWNLOAD_TYPE_ONLY_BOOKING)){
+                this.downloadType=DOWNLOAD_TYPE_ONLY_BOOKING;
             } else if(reservationType.equals(DOWNLOAD_TYPE_ONLY_BOOKING)){
                 this.downloadType=DOWNLOAD_TYPE_ONLY_BOOKING;
             }
@@ -610,8 +614,11 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
             int reservationCount = 0;
             for (Map<String, Object> reservation : reservations) {
-                reservationCount++;
                  
+                reservationCount++;
+                if(reservationCount>ReservationDownloadServices.DOWNLOAD_LIMIT)
+                    break;
+                
                 Integer reservationId = new Integer(reservation.get("reservation_id").toString());
                 Integer currentPortalId = new Integer(reservation.get("portal_id").toString());
                 if(currentPortalId==null) currentPortalId=1;
