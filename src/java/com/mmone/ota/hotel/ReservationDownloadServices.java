@@ -339,12 +339,20 @@ public class ReservationDownloadServices {
 
         QueryRunner qr = new QueryRunner(ds);
         Timestamp today = new Timestamp(new java.util.Date().getTime());
-
+        
+        String confirm=null;
+        if (confirmationNumber == null || confirmationNumber.length() <= 0) {
+            confirm = "c_c";
+        } else if (confirmationNumber.length() <= 30) {
+            confirm = confirmationNumber;
+        } else { 
+            confirm = confirmationNumber.substring(0, 30);
+        } 
         try {
             if (lastCheckDate == null) {
-                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, confirmationNumber.substring(0,30), reservationId, reservationId, today);
+                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, confirm, reservationId, reservationId, today);
             } else {
-                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD, contextId, confirmationNumber.substring(0,30), reservationId, lastCheckDate, today);
+                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD, contextId, confirm, reservationId, lastCheckDate, today);
             }
             return;
         } catch (SQLException e) {

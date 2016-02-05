@@ -156,7 +156,9 @@ public class OTANotifReportRSBuilder  extends BaseBuilder{
         if (thereIsError()) {
             return res;
         }
-
+        
+        Logger.getLogger(OTANotifReportRSBuilder.class.getName()).log(Level.INFO, "token="+token);
+        
         try {
             Map dw = ReservationDownloadServices.setReservationsAsDownloaded(ds , token, confirmation_number,resIdType);
         } catch (Exception ex) {
