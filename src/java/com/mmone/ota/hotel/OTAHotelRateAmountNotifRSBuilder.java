@@ -216,6 +216,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
         } catch (SQLException e) {
             Requestorid(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "System Error. SQL error"); 
         }  
+        
         return connection;
     }
     public MessageAcknowledgementType build(String requestorID) {
