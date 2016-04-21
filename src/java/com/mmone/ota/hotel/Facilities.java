@@ -30,6 +30,8 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -42,6 +44,8 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult; 
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.w3c.dom.Document;
@@ -604,36 +608,8 @@ public class Facilities {
         */
         return result;
     }
-    public static void main(String[] args) {
-        /*
-        JSONObject  r =(JSONObject ) JSONValue.parse("{'totRoomPrice':{'BB':176,'HB':132.33,'FB':176,'AI':220},'roomPriceDetail':{'2012-11-29':{'BB':44,'HB':33,'FB':44,'AI':55},'2012-11-30':{'BB':44,'HB':33,'FB':44,'AI':55},'2012-12-01':{'BB':44,'HB':33,'FB':44,'AI':55},'2012-12-02':{'BB':44,'HB':33,'FB':44,'AI':55}},'totExtrabedDets':[]}");
-        JSONObject roomPriceDetail = (JSONObject) r.get("roomPriceDetail");
-        
-        Set days = roomPriceDetail.keySet();
-       
-        for (Iterator it = days.iterator(); it.hasNext();) {
-            String day = (String) it.next();
-            System.out.println(day);
-            
-            JSONObject prices = (JSONObject) roomPriceDetail.get(day);
-            Set treatments = prices.keySet();
-            Float price = 0f ;
-            try {
-                price = new Float(prices.get("BB").toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-             
-            System.out.println(price);
-            
-             
-            
-        }
-        
-        System.out.println(  roomPriceDetail.getClass().getName()  );
-        System.out.println(  ""  );
-        */
-    }
+     
+    
             
     
 }

@@ -104,7 +104,6 @@ public class OtaWebServices {
         return ds;
     }
     
-    
     private static int getPortalCode (String user,InitialContext initialContext) {
         int portalCode = Facilities.DEFAULTS_PORTAL_CODE; 
         try {
@@ -118,8 +117,7 @@ public class OtaWebServices {
         }
 
         return portalCode;
-    }
-    
+    }    
     private Boolean needBooking(String target, String requestorID){ 
         Boolean autNeedBooking = null;
         if (target.equals(TARGET_PRODUCTION)) {
@@ -177,8 +175,7 @@ public class OtaWebServices {
         System.out.println(" user_status = " + user_status  );
         if(user_status==null) user_status=0;
         System.out.println(" user_status (default) = " + user_status  );
-        
-        
+         
         return (user_status==1);
     }
     private XmlRpcClient getRpcClient(String target, String requestorID) throws Exception {

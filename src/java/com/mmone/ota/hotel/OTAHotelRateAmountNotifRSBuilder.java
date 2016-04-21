@@ -488,17 +488,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
         System.out.println("-- pricelist_id " + pricelist_id);
         return pricelist_id;
     }
-    synchronized private void doInsertIntoPricelistRpc(Connection conn, RateAmountMessageType rateAmountMessageType) {
-
-        /*
-        ((((((((((()
-        /  _____   /|
-        /  /____/  /-|
-        /  COMMENT /--|  Crea una chiamata rpc e salva le camere ed i trattamenti
-        /__________/---|
-        |-----------|
-        '-----------'
-         */
+    synchronized private void doInsertIntoPricelistRpc(Connection conn, RateAmountMessageType rateAmountMessageType) { 
         StatusApplicationControlType statusApplicationControlType = rateAmountMessageType.getStatusApplicationControl();
 
         Object[] priceListParams = Facilities.getEmptyPriceListValues();
@@ -509,19 +499,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
         Map room = new Hashtable();
 
         Map treatments = null;
-        //Map treatment = null;
-
-        
-        /*
-
-        _____
-        /     \______
-        |   _________|__
-        |  / LOAD      /
-        | /  REQUEST  /
-        |/___________/    recupero il codice listino
-
-         */
+        //Map treatment = null; 
         Integer iClistino=null;
         if (codiceListino == null) { 
         } else if (codiceListino.equals("NR")) {
@@ -551,14 +529,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
             //priceListParams[Facilities.PRICE_LIST_LIST_ID] = 1;
         }
 
-        /*
-        _____
-        /     \______
-        |   _________|__
-        |  / LOAD      /
-        | /  REQUEST  /
-        |/___________/    recupero il codice camera
-         */
+     
         String codiceCamera = null;
         try {
             codiceCamera = statusApplicationControlType.getInvCode().toString();
@@ -573,13 +544,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
             Requestorid(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_ROOM_UNIT_CODE_INCORRECT, "InvCode null");
         } else {
 
-            /*
-            .----.
-            |'----'|
-            |  DB  |
-            | load |   carico la room dalla tabella room   tramite codice camera e id struttura
-            '.____.'
-             */
+       
             try {
                 Map mCamera = run.query(
                         "SELECT room_id,room_use_extrabed FROM room WHERE room_code= ? AND structure_id = ?",
@@ -600,15 +565,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
         logData.put("Room Code", codiceCamera);
         priceListParams[Facilities.PRICE_LIST_STRUCTURE_ID] = hotelCode;
 
-        /*
-        _____
-        /     \______
-        |   _________|__
-        |  / LOAD      /
-        | /  REQUEST  /
-        |/___________/    recupero start date
-         */
-
+ 
         Date dStartDate = null;
         String sStartDate = statusApplicationControlType.getStart();
         if (StringUtils.isEmpty(sStartDate)) {
@@ -623,14 +580,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
             }
         }
 
-        /*
-        _____
-        /     \______
-        |   _________|__
-        |  / LOAD      /
-        | /  REQUEST  /
-        |/___________/    recupero end date
-         */
+ 
         Date dEndDate = null;
         String sEndDate = statusApplicationControlType.getEnd();
         if (StringUtils.isEmpty(sEndDate)) {
@@ -659,26 +609,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
          
         priceListParams[Facilities.PRICE_LIST_PRICE_SET] = 1;
         priceListParams[Facilities.PRICE_LIST_ROOM_ID] = roomId;
-
-        /*
-        _____________
-        ....-''``'._ _________)
-        ,_  '-.___)           definisco i parametri per la chiamata rpc
-        `'-._)_)
-        -----'``"-,__(__)
-
-         */
-        
-
-        /*
-        ((((((((((()
-        /  _____   /|
-        /  /____/  /-|  Gestione extra bed
-        /  COMMENT /--|  controllo tramite parametro
-        /__________/---|  AdditionalGuestAmounts se sono previsti extra bed
-        |-----------|
-        '-----------'
-         */
+ 
 
         RateAmountMessageType.Rates.Rate rate = null;
         List<BaseByGuestAmt> bbGuestAmount = null;
@@ -777,27 +708,10 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
                                 if (thereIsError()) {
                                     return  ;
                                 }
-
-                                /*
-                                ((((((((((()
-                                /  _____   /|
-                                /  /____/  /-|  Trattamenti
-                                /  COMMENT /--|
-                                /__________/---|
-                                |-----------|
-                                '-----------'
-                                 */
+ 
                                 
                                 try {
-                                   
-
-                                    /*
-                                    _____________
-                                    ....-''``'._ _________)
-                                    ,_  '-.___)           definisco i parametri per la chiamata rpc della room
-                                    `'-._)_)
-                                    -----'``"-,__(__)
-                                     */
+  
 
                                     treatments.put(new Integer(Facilities.MPT_TO_MM[iMealPlanCodes]).toString(), Float.toString(price));
                                 } catch (Exception e) {
@@ -927,15 +841,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
                         //case 2: // extrabed
                         default:
                             if (ageQualifyingCode.equals(Facilities.CHILD_QUALYFING_CODE) || ageQualifyingCode.equals(Facilities.ADULT_QUALYFING_CODE) /*&& (j == 1 || j == 2)*/) {
-                                /*
-                                ________
-                                .'`   |    |`'.
-                                |     '----'  |
-                                |  .-------.  |
-                                |  |-------|  |  salva gli extrabed
-                                |  ; SAVE  ;  |
-                                |__:_______:__|
-                                 */
+       
                                 //priceListParams[Facilities.PRICE_LIST_EXTRABED_SET] = 0;
 
                                 if (roomExtraBed == 1) {

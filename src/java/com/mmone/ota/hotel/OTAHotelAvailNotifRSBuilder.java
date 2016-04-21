@@ -645,6 +645,14 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                 doSaveIU(period);
             } else if (sRatePlanCode.equals(RATE_PLAN_CODE_IU)) {
                 doSaveIU(period);
+            }else{
+              
+                /*
+                String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
+                Integer rateId=null; 
+                 
+                rateId = (Integer) run.query(sqlMl, new ScalarHandler("multirate_id"), sRatePlanCode, hotelCode);
+                doSaveIU(period); */
             }
 
         } catch (Exception ex) {
