@@ -71,23 +71,23 @@ public class Facilities {
 	 * @throws DatatypeConfigurationException the datatype configuration exception
 	 */
 	public static XMLGregorianCalendar getToday() throws DatatypeConfigurationException{
-		GregorianCalendar today =  new GregorianCalendar();
-        DatatypeFactory factory;
-        try {
-            factory = DatatypeFactory.newInstance();
-            XMLGregorianCalendar calendar = factory.newXMLGregorianCalendar(
-                today.get(GregorianCalendar.YEAR),
-                today.get(GregorianCalendar.MONTH) + 1,
-                today.get(GregorianCalendar.DAY_OF_MONTH),
-                today.get(GregorianCalendar.HOUR),
-                today.get(GregorianCalendar.MINUTE),
-                today.get(GregorianCalendar.SECOND),  0,0);
-            
-            return calendar; 
-        } catch (DatatypeConfigurationException ex) {
-            Logger.getLogger(Facilities.class.getName()).log(Level.SEVERE, null, ex);
-            throw ex;
-        }
+            GregorianCalendar today =  new GregorianCalendar();
+            DatatypeFactory factory;
+            try {
+                factory = DatatypeFactory.newInstance();
+                XMLGregorianCalendar calendar = factory.newXMLGregorianCalendar(
+                    today.get(GregorianCalendar.YEAR),
+                    today.get(GregorianCalendar.MONTH) + 1,
+                    today.get(GregorianCalendar.DAY_OF_MONTH),
+                    today.get(GregorianCalendar.HOUR),
+                    today.get(GregorianCalendar.MINUTE),
+                    today.get(GregorianCalendar.SECOND),  0,0);
+
+                return calendar; 
+            } catch (DatatypeConfigurationException ex) {
+                Logger.getLogger(Facilities.class.getName()).log(Level.SEVERE, null, ex);
+                throw ex;
+            }
 
 	}
 	
