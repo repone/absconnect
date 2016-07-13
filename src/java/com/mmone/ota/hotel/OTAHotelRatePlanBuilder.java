@@ -27,6 +27,7 @@ import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.opentravel.ota._2003._05.HotelRatePlanType;
 import org.opentravel.ota._2003._05.OTAHotelRatePlanRS;
 import org.opentravel.ota._2003._05.OTAHotelRatePlanRS.RatePlans;
@@ -211,12 +212,18 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
 
         for (OTAHotelRatePlanRQ.RatePlans.RatePlan ratePlan : lRatePlan) {
             List<RatePlanCandidatesType.RatePlanCandidate> lRatePlanCandidate = ratePlan.getRatePlanCandidates().getRatePlanCandidate();
+            OTAHotelRatePlanRQ.RatePlans.RatePlan.DateRange dr = ratePlan.getDateRange();
+             
+            
             for (RatePlanCandidatesType.RatePlanCandidate ratePlanCandidate : lRatePlanCandidate) { 
                 String listId = ratePlanCandidate.getRatePlanCode().toString();
                 if(listId.equals(DOWNLOAD_RATES_LIST)){
                     buildRatesList( listId );
                 } else{
-                    buildRatePlans(ratePlanCandidate);
+                    if(dr!=null)
+                        buildRatePlans(ratePlanCandidate,dr);
+                    else
+                        buildRatePlans(ratePlanCandidate);
                 }    
             }
         }
@@ -289,8 +296,16 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
         }
 
     }
-
     public OTAHotelRatePlanRS buildRatePlans(RatePlanCandidatesType.RatePlanCandidate ratePlanCandidate) {
+        OTAHotelRatePlanRQ.RatePlans.RatePlan.DateRange dr = new OTAHotelRatePlanRQ.RatePlans.RatePlan.DateRange();
+        
+        
+        dr.setStart(  DateFormatUtils.format(new Date(), "yyyy-MM-dd")         );
+        dr.setEnd("2100-12-31");
+        
+        return buildRatePlans(ratePlanCandidate, dr);
+    }
+     public OTAHotelRatePlanRS buildRatePlans(RatePlanCandidatesType.RatePlanCandidate ratePlanCandidate,OTAHotelRatePlanRQ.RatePlans.RatePlan.DateRange dr) {
         RatePlans ratePlans = res.getRatePlans();
 
         try {
@@ -328,7 +343,7 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
 
             ratePlans.setHotelCode(hotelCode);
 
-            List prices = run.query(Facilities.SELECT_PRICE_LIST, new MapListHandler(), ihotelCode, ilistId, res.getPrimaryLangID(), ihotelCode);
+            List prices = run.query(Facilities.SELECT_PRICE_LIST_PERIOD, new MapListHandler(), ihotelCode, ilistId, dr.getStart(),dr.getEnd(), res.getPrimaryLangID(), ihotelCode);
 //            List structurePayment = run.query(Facilities.SELECT_STRUCTURE_PAYMENT, new MapListHandler(), Facilities.DEFAULTS_PORTAL_CODE, ihotelCode);
 
 //            RateUploadType.GuaranteePolicies guaranteePolicies = new RateUploadType.GuaranteePolicies();
@@ -363,12 +378,19 @@ public class OTAHotelRatePlanBuilder  extends BaseBuilder{
 
             Map<String, HotelRatePlanType> mHotelRatePlanType = new Hashtable();
             
+            String[] patterns = new String[]{"yyyy-MM-dd"}; 
+            
+            Date st = DateUtils.parseDate(dr.getStart(), patterns);
+            Date en = DateUtils.parseDate(dr.getEnd(), patterns);
             
             for (int i = 0; i < prices.size(); i++) {
                 Map row = (Map) prices.get(i);
                  
                 String dateFrom = DateFormatUtils.format((Date) row.get("pricelist_date_from"), "dd-MM-yyyy");
                 String dateTo = DateFormatUtils.format((Date) row.get("pricelist_date_to"), "dd-MM-yyyy");
+                
+                 
+                
                 String composePeriod = dateFrom + "@@" + dateTo + "@@" + listId;
 
                 HotelRatePlanType hotelRatePlanType = mHotelRatePlanType.get(composePeriod);

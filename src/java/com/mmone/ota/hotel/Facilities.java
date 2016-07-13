@@ -324,6 +324,24 @@ public class Facilities {
             + "AND pt.treatment_id IN (SELECT treatment_id "
             + "    FROM structure_treatment WHERE structure_treatment.structure_id = ? ) " + //ABS_STRUCTURE_ID
             "ORDER BY p.pricelist_date_from, p.room_id ";
+    public static final String SELECT_PRICE_LIST_PERIOD =
+            "SELECT p.* , pt.*, rd.*, ppd.*, t.* "
+            + "FROM pricelist AS p "
+            + "INNER JOIN pricelist_treatment AS pt ON p.pricelist_id = pt.pricelist_id "
+            + "INNER JOIN room_details as rd ON p.room_id = rd.room_id "
+            + "LEFT JOIN pricelist_period_details AS ppd ON ppd.period_id = p.period_id "
+            + "INNER JOIN treatment as t ON t.treatment_id = pt.treatment_id "
+            + "WHERE p.structure_id = ? "
+            + "AND p.list_id = ? "
+            + "AND p.pricelist_date_to >= CURRENT_DATE "
+            + "AND p.pricelist_date_to >= ? " // st
+            + "AND p.pricelist_date_from <=? " // en
+            + "AND p.pricelist_active = 1 "
+            + "AND rd.language = ? "
+            + "AND pt.treatment_id IN (SELECT treatment_id "
+            + "    FROM structure_treatment WHERE structure_treatment.structure_id = ? ) " + //ABS_STRUCTURE_ID
+            "ORDER BY p.pricelist_date_from, p.room_id ";
+    
     public static final String SELECT_STRUCTURE_PAYMENT =
             "SELECT * FROM structure_payment "
             + "WHERE portal_id=? AND structure_id=?";
