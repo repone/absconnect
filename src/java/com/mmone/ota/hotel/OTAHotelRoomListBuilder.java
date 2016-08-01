@@ -194,10 +194,10 @@ public class OTAHotelRoomListBuilder  extends BaseBuilder{
         }
         
         String SQL_SELECT_ROOM_BY_STRUCTURE_ID = "" 
-                +" SELECT room_id,room_name,room_code,room_min_pax,room_max_pax FROM room "
+                +" SELECT room.room_id,room_name,room_code,room_min_pax,room_max_pax FROM room "
                 +" LEFT JOIN room_details ON room.room_id = room_details.room_id AND room_details.language='IT'  "
                 +" WHERE structure_id = ? AND room_status = 1";
-
+ 
         List<Map<String,Object>> rows = null;
 
         try {
