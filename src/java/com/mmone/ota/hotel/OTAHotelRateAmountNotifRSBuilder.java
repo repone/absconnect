@@ -522,7 +522,8 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
          
         Integer pricelist_id = null;
         if (codiceListino == null || iClistino==null ) {
-            Requestorid(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_INVALID_RATE_CODE, "RatePlanCode is invalid");
+            addWarning(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_INVALID_RATE_CODE, "RatePlanCode is invalid");
+            //Requestorid(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_INVALID_RATE_CODE, "RatePlanCode is invalid");
             return;
         } else {
             priceListParams[Facilities.PRICE_LIST_LIST_ID] = iClistino;
@@ -557,7 +558,8 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
                 roomId = Integer.parseInt(mCamera.get("room_id").toString());
                 roomExtraBed = new Integer(mCamera.get("room_use_extrabed").toString());
             } catch (Exception e) {
-                Requestorid(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "System Error. Retrieving room id: " + e.getMessage());
+                addWarning(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "System Error. Retrieving room id: " + e.getMessage());
+                //Requestorid(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "System Error. Retrieving room id: " + e.getMessage());
                 return  ;
             }
         }
