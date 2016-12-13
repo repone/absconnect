@@ -125,21 +125,21 @@ public class OtaWebServices {
                 System.out.println(" checking = " + "cr/aut" + requestorID + "needbooking"  );
                 autNeedBooking = (Boolean) getContext().lookup("cr/aut" + requestorID + "needbooking");
             } catch (NamingException ex) {
-                Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE,ex.getMessage());
             }
         } else if (target.equals(TARGET_TEST)) {
             try {
                 System.out.println(" checking = " + "cr/auttestneedbooking"  );
                 autNeedBooking = (Boolean) getContext().lookup("cr/auttestneedbooking");
             } catch (NamingException ex) {
-                Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE, ex.getMessage());
             }
         } else {
             try {
                 System.out.println(" checking (default) = " + "cr/auttestneedbooking "  );
                 autNeedBooking = (Boolean) getContext().lookup("cr/auttestneedbooking");
             } catch (NamingException ex) {
-                Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE,   ex.getMessage());
             }
         }
         
@@ -607,7 +607,7 @@ public class OtaWebServices {
                 return resError;
             }
         } catch (Exception e) {
-            Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(OtaWebServices.class.getName()).log(Level.SEVERE, e.getMessage());
         }
         if (res.getErrors() != null) {
             MessageAcknowledgementType resError = new MessageAcknowledgementType();

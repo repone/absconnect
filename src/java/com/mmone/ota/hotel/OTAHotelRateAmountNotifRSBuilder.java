@@ -1,6 +1,7 @@
 package com.mmone.ota.hotel;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -62,6 +63,7 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
     private BigDecimal version = new BigDecimal(Facilities.VERSION);
     private Map<String, String> logData = new LinkedHashMap<String, String>();
     private int lastUsedSpecificationId = -1;
+    
     private Connection connection = null;
      
     public final void Requestorid(String type, String code, String message) {
@@ -504,16 +506,39 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
         if (codiceListino == null) { 
         } else if (codiceListino.equals("NR")) {
             codiceListino = "1";
-            iClistino =1;
+            iClistino =1;  
         } else if (codiceListino.equals("IU")) {
             codiceListino = "1";
             iClistino =1;
+            //recupero listino prioritario
+            String sqlListPri = "SELECT list_id from priority_inventory WHERE structure_id = ? ";
+            int idListinoPrioritario = -1;
+
+            try {
+                Object lp = run.query(sqlListPri, new ScalarHandler("list_id"), hotelCode);
+                if(lp instanceof Long){
+                    Long lIdListinoPrioritario= (Long) lp;
+                    idListinoPrioritario = lIdListinoPrioritario.intValue();
+                }else{
+                    Integer iIdListinoPrioritario= (Integer) lp; 
+                    idListinoPrioritario = iIdListinoPrioritario;
+                }
+                
+                 
+            } catch (Exception e) { 
+                Logger.getLogger(OTAHotelRateAmountNotifRSBuilder.class.getName()).log(Level.SEVERE, e.getMessage());
+            }
+
+            if (idListinoPrioritario > 0)  iClistino =idListinoPrioritario; 
+            
         } else { 
             if(this.needBooking){ 
                 String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
                 try {
                     iClistino = (Integer) run.query(sqlMl, new ScalarHandler("multirate_id"), codiceListino, hotelCode); 
-                } catch (Exception e) {  } 
+                } catch (Exception e) { 
+                    Logger.getLogger(OTAHotelRateAmountNotifRSBuilder.class.getName()).log(Level.SEVERE, e.getMessage());
+                } 
                 
             }else{
                 iClistino=null;
@@ -665,7 +690,8 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
             BigDecimal bprice = null;
             
             try {
-                specificationId = (Integer)run.query(Facilities.SELECT_MAX_EXTRABED_SPECIFICATION_ID, new ScalarHandler());
+                Long lSpecificationId = (Long)run.query(Facilities.SELECT_MAX_EXTRABED_SPECIFICATION_ID, new ScalarHandler());
+                specificationId = lSpecificationId.intValue();
             } catch (Exception e) {
                 System.out.println("-- for rates specificationId Error " + e.getMessage());
                 logInfoRequest(logData);
@@ -890,5 +916,14 @@ public class OTAHotelRateAmountNotifRSBuilder  extends BaseBuilder{
 
     public MessageAcknowledgementType getRes() {
         return res;
+    }
+    
+    public static void main(String[] args) {
+        Long a = 1000l;
+        BigInteger d = new BigInteger("10000");
+        
+        int b = 1000;
+        
+        long c= (long)d.intValue() ;
     }
 }

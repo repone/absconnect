@@ -358,7 +358,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             addError(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_INVALID_RATE_CODE, "RatePlanCode null");
         }
 
-        logData.put("RatePlan", ratePlanCode);
+        logData.put("RatePlan", sRatePlanCode+" - "+ratePlanCode);
     }
 
     private void setInvCode(int index) {
