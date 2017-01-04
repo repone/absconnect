@@ -90,6 +90,19 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
     int checkout = 0;
     int checkin = 0;
     private int sendEmail = 0; 
+    private Map<Object,Boolean> uniqueAllotmentRooms=null;
+
+    public Map<Object, Boolean> getUniqueAllotmentRooms() {
+        if(uniqueAllotmentRooms==null){
+            uniqueAllotmentRooms = Facilities.getUniqueAllotmentRooms(this.run, this.hotelCode);
+        }
+        return uniqueAllotmentRooms;
+    }
+    
+    public boolean isRoomUniqueAllotment(int roomId){
+        return getUniqueAllotmentRooms().containsKey(roomId);
+    }
+    
     public final void addError(String type, String code, String message) {
         if (res.getErrors() == null) {
             res.setErrors(new ErrorsType());
@@ -208,6 +221,8 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             permission = run.query(sqlChkUser, new MapHandler(), sUser, hotelCode, 0);
         } catch (SQLException e) {
             Logger.getLogger(OTAHotelRoomListBuilder.class.getName()).log(Level.SEVERE, null, e);
+        }catch(NoClassDefFoundError ncfe){
+            Logger.getLogger(OTAHotelRoomListBuilder.class.getName()).log(Level.SEVERE, null, ncfe);
         }
 
         if (permission == null) {
@@ -485,6 +500,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
 
             if (restriction == null || status == null) {
             } else {
+                //<editor-fold defaultstate="collapsed" desc="restriction if">
                 if (restriction.equals("Arrival")) {
                     if (status.equals("Close")) {
                         checkin = 1;
@@ -524,9 +540,10 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                         isCheckOut = true;
                         checkin = 1;
                         isCheckIn = true;
-                    }   
+                    }
                     logData.put("Departure", status);
                 }
+//</editor-fold>
             }
         }
     }
@@ -562,6 +579,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
  
                 if (restriction == null || status == null) {
                 } else {
+                    //<editor-fold defaultstate="collapsed" desc="restriction status">
                     if (restriction.equals("Arrival")) {
                         if (status.equals("Close")) {
                             checkin = 1;
@@ -581,6 +599,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                         } // else errore
                         logData.put("Departure", status);
                     }
+//</editor-fold>
                 }
             }
         }    
@@ -623,23 +642,14 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
 
     private void doSaveFactory() {
         try {
-            if (!isRoomCorrect()) {
-                return;
-            }
+            if (!isRoomCorrect()) {  return; }
             int period = (int) Facilities.dateDiff(startDt, endDt);
             if (period < 0) {
                 //date errate
                 addError(Facilities.EWT_UNKNOWN, Facilities.ERR_INVALID_DATE, "Start date after End date");
                 return;
             }
-
-            // da verificare
-            //if (period < 1) {
-            //date errate
-            //addWarning(Facilities.EWT_UNKNOWN, Facilities.ERR_INVALID_DATE, "Short period (one day)");
-            //return;
-            //}
-
+  
             // cambiare per Normal Rate
             if (sRatePlanCode.equals(RATE_PLAN_CODE_NR)) {
                 doSaveIU(period);
@@ -647,10 +657,8 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                 doSaveIU(period);
             }else{
               
-                /*
-                String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
-                Integer rateId=null; 
-                 
+                /* String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
+                Integer rateId=null;  
                 rateId = (Integer) run.query(sqlMl, new ScalarHandler("multirate_id"), sRatePlanCode, hotelCode);
                 doSaveIU(period); */
             }
@@ -794,6 +802,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
 
         try {
             java.util.Date dtStart = DateUtils.parseDate(startDt, Facilities.dateParsers);
+            java.util.Date dtEnd = DateUtils.parseDate(endDt, Facilities.dateParsers);
 
             java.util.Date today = new java.util.Date();
 
@@ -807,6 +816,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             conn = ds.getConnection();
             conn.setAutoCommit(false);
 
+            //<editor-fold defaultstate="collapsed" desc="doSaveIU sql">
             String sqlInsInventory = ""
                     + " INSERT INTO inventory ("
                     + "     room_id, "
@@ -824,9 +834,9 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "     inventory_modified_date=?, "
                     + "     inventory_modified_user=? "
                     + "";
-
+            
             String sqlInsAllotment = getSqlInsertAllotment();
-
+            
             //recupero quanti allotment sono presenti nei listini
             String sqlInvent = ""
                     + "SELECT sum(allotment_number) as sum_of_allot "
@@ -837,7 +847,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + " AND inventory_type_id = ? "
                     + " AND allotment_number IS NOT NULL"
                     + "";
-
+            
             //recupero quanti allotment sono presenti nei listini
             String sqlAllot = ""
                     + "SELECT sum(availability) as sum_of_avail "
@@ -846,7 +856,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + " room_id = ? "
                     + " AND thedate = ? "
                     + "";
-
+            
             String sqlResetAllotment = ""
                     + " INSERT INTO allotment ("
                     + "     structure_id,"
@@ -862,7 +872,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "";
             // DEBUG
             //System.out.println("SqlInsAllotment: "  + sqlInsAllotment);
-
+            
             String sqlInsertInventoryIssues = ""
                     + " INSERT INTO inventory_issues ("
                     + "      structure_id,"
@@ -871,7 +881,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "      accomplished"
                     + ")"
                     + " VALUES (" + "?, ?, ?, ?" + ")";
-
+            
             String sqlUpdateInventoryIssues = ""
                     + " UPDATE inventory_issues SET"
                     + "       accomplished = ?"
@@ -881,8 +891,8 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "      room_id = ?"
                     + " AND"
                     + "      issue_date = ?";
-                    
-
+            
+            
             String sqlUpdateNormalRateRestrictions = ""
                     + " UPDATE allotment SET"
                     + (isCheckIn ? "  lock_checkin = ?," : "")
@@ -894,16 +904,20 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "     list_id = ? AND "
                     + "     room_id = ? AND "
                     + "     thedate = ?";
-
+            
             String sqlAllotLp = sqlAllot + " AND list_id = ? ";
+//</editor-fold>
 
+            //<editor-fold defaultstate="collapsed" desc="doSaveIu prepared staments">
             PreparedStatement psSqlInsInventory = conn.prepareStatement(sqlInsInventory);
             PreparedStatement psSqlInsAllotment = conn.prepareStatement(sqlInsAllotment);
             PreparedStatement psSqlResetAllotment = conn.prepareStatement(sqlResetAllotment);
             PreparedStatement psSqlInsInventoryIssues = conn.prepareStatement(sqlInsertInventoryIssues);
             PreparedStatement psSqlUpdInventoryIssues = conn.prepareStatement(sqlUpdateInventoryIssues);
             PreparedStatement psSqlUpdNormalRateRestrictions = conn.prepareStatement(sqlUpdateNormalRateRestrictions);
-
+            //</editor-fold>
+            
+            //<editor-fold defaultstate="collapsed" desc="listino prioritario">
             //recupero listino prioritario
             String sqlListPri = "SELECT list_id from priority_inventory WHERE structure_id = ? ";
             int idListinoPrioritario = -1;
@@ -919,181 +933,116 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                 addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "System Error: priority inventory not found");
                 return;
             }
+            //</editor-fold>
 
+            //<editor-fold defaultstate="collapsed" desc="algoritmo">
             //System.out.println("idListinoPrioritario " +idListinoPrioritario);
             // carico il disponibile dal listino principale
             // carico il totale in tutti i listini
             // se i due totali non corrispondono ho valori anche in altri listini
             //
             // se non ho valori in altri listini
-            //      se valore BookingLimit > availability listino principale availability diventa 
+            //      se valore BookingLimit > availability listino principale availability diventa
             //                               BookingLimit-sumOfAvailAltriListini=BookingLimit
             //      se valore BookingLimit = availability listino principale non faccio niente
-            //      se valore BookingLimit < availability listino principale availability diventa 
+            //      se valore BookingLimit < availability listino principale availability diventa
             //                               BookingLimit-sumOfAvailAltriListini=BookingLimit
             // se ho valori in altri listini
             //      se BookingLimit > availability listino principale errore
             //      se BookingLimit = availability listino principale non faccio niente
             //      se BookingLimit < availability listino principale availability diventa BookingLimit-sumOfAvailAltriListini
-
+            //</editor-fold>
             
             //System.out.println("Period " + period);
             Map<String, String> roomsData = new LinkedHashMap<String, String>();
             StringBuffer track = new StringBuffer();
+             
+            //<editor-fold defaultstate="collapsed" desc="for period rpc call">
             
-            track.append("\n<br>for (int i = 0; i <= period; i++) ");
-            for (int i = 0; i <= period; i++) {
-                java.util.Date curDate = DateUtils.addDays(dtStart, i);
-                String sCurDate = DateFormatUtils.format(curDate, "dd-MM-yyyy");
-
-                int sumOfCMAllot = 0;
-                try {
-                    sumOfCMAllot = new Integer(run.query(sqlInvent, new ScalarHandler("sum_of_allot"), invCode, curDate, INVENTORY_CM).toString());
-                } catch (Exception e) {
-                    //
-                }
-
-                int sumOfAvailTuttiListini = 0;
-                try {
-                    sumOfAvailTuttiListini = new Integer(run.query(sqlAllot, new ScalarHandler("sum_of_avail"), invCode, curDate).toString());
-                } catch (Exception e) {
-                    //
-                }
-                sumOfAvailTuttiListini = sumOfAvailTuttiListini + sumOfCMAllot;
-
-                int sumOfAvailLp = 0;
-                try {
-                    sumOfAvailLp = new Integer(run.query(sqlAllotLp, new ScalarHandler("sum_of_avail"), invCode, curDate, idListinoPrioritario).toString());
-                } catch (Exception e) {
-                    //
-                }
-                int sumOfAvailAltriListini = sumOfAvailTuttiListini - sumOfAvailLp;
-
-                int iBookingLimit = new Integer(bookingLimit);
-                int curAllotment = iBookingLimit - sumOfAvailAltriListini;
-
-                int onlyIU = 0; // cotrollo in riduzione
-                                
-                if (curAllotment < 0 && iBookingLimit != 0) {
-                    onlyIU = 1;
-                    roomsData.put(sCurDate, sInvCode);
-                    //addWarning(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "InvCode " + sInvCode + " date " + sCurDate + ": BookingLimit less than priority inventory availability.");
-                }
-                onlyIU = 0;
-                int xrpcresult = modifyAllotment( curDate, AVAIL_ACTION_SET,iBookingLimit,0); 
-                
-                track.append("\n<br>xrpcresult");
-                 if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
-                     Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Stop procedure " ); 
-                     return;
-                 }else if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_NO_VIRTUAL_ROOM) { //faccio insert a mano
-                    if (iBookingLimit == 0) {
-                        track.append("\n<br>iBookingLimit == 0");    
-                        Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Bookinglimit = 0 " );    
-                        // Inventory IU
-                        fillInsertInventoryParameters(psSqlInsInventory, curDate, today, INVENTORY_IU, iBookingLimit);
-                        psSqlInsInventory.execute();
-                        track.append("\n<br>iBookingLimit == 0 fillInsertInventoryParameters");
-                        // Inventory CM
-                        fillInsertInventoryParameters(psSqlInsInventory, curDate, today, INVENTORY_CM, iBookingLimit);
-                        psSqlInsInventory.execute();
-
-                        // tutti i listini
-                        String listId = "1"; // normal rate
-                        fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
-                        psSqlResetAllotment.execute();
-                        track.append("\n<br>iBookingLimit == 0 fillInsertResetAllotment");
-                        listId = "2"; // special rate
-                        fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
-                        psSqlResetAllotment.execute();
-
-                        // multilistini
-                        List<Map<String, Object>> lMultirate = null;
-                        String sqlMultirate = "SELECT multirate_id "
-                                + " FROM multirate WHERE structure_id = ?";
-
-                        try {
-                            track.append("\n<br>iBookingLimit == 0 lMultirate");
-                            lMultirate = run.query(sqlMultirate, new MapListHandler(), hotelCode);
-                        } catch (SQLException e) {
-                            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
-                        }
-
-                        if (lMultirate != null) {
-                            for (Map<String, Object> multirate : lMultirate) {
-                                listId = multirate.get("multirate_id").toString();
-                                fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
-                                psSqlResetAllotment.execute();
-                            }
-                        }
-
-                        // ABS GATEWAY
-                        
-                        try {
-                            track.append("\n<br>iBookingLimit == 0 updateAbsGateway");
-                            updateAbsGateway( curDate); // boolean
-                        } catch (SQLException e) {
-                            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
-                            addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "Error on update IDS");
-                        } catch (Exception e) {
-                            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
-                            addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "Error on update structure " + e.getMessage());
-                        }
-
-                        // CM GATEWAY
-                        try {
-                            track.append("\n<br>iBookingLimit == 0 updateCMGateway");
-                            updateCMGateway(curDate);
-                        } catch (Exception e) {
-                        }
-                          
-                         
- 
-
-                    } else { // solo inventario unico e tariffa prioritaria
-                        // Inventory IU
-                        track.append("\n<br>iBookingLimit > 0  ");
-                        Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Bookinglimit != 0 " );
-                        fillInsertInventoryParameters(psSqlInsInventory, curDate, today, INVENTORY_IU, iBookingLimit);
-                        psSqlInsInventory.execute();
-                        track.append("\n<br>iBookingLimit > 0  fillInsertInventoryParameters");
-                        if (onlyIU == 0) { // Tariffa prioritaria
-                            track.append("\n<br>iBookingLimit > 0  onlyIU == 0");
-                            fillUpdateInventoryIssues(psSqlUpdInventoryIssues, curDate, 1);
-                            psSqlUpdInventoryIssues.execute();
-                            track.append("\n<br>iBookingLimit > 0  onlyIU == 0 fillUpdateInventoryIssues");
-                            fillInsertAllotmentParameters(psSqlInsAllotment, curDate, new Integer(idListinoPrioritario).toString(), curAllotment); // listino prioritario
-                            psSqlInsAllotment.execute();
-                            track.append("\n<br>iBookingLimit > 0  onlyIU == 0 fillInsertAllotmentParameters");
-                            // aggiorna eventuali restrictions nel normal rate
-                            try {
-                                track.append("\n<br>iBookingLimit > 0  onlyIU == 0 fillUpdateNormalRateRestrictions");
-                                fillUpdateNormalRateRestrictions(psSqlUpdNormalRateRestrictions, curDate);
-                                psSqlUpdNormalRateRestrictions.execute();
-                                track.append("\n<br>iBookingLimit > 0  onlyIU == 0 fillUpdateNormalRateRestrictions -- done");
-                            } catch (Exception e) {
-                                System.out.println("psSqlUpdNormalRateRestrictions "+e.getMessage()); 
-                                Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE,"psSqlUpdNormalRateRestrictions error ",e);
-                            }
-                        } else if (onlyIU == 1) { // aggiorna giorni errati
-                            track.append("\n<br>iBookingLimit > 0  onlyIU == 1 fillUpdateInventoryIssues");
-                            fillUpdateInventoryIssues(psSqlUpdInventoryIssues, curDate, 1);
-                            psSqlUpdInventoryIssues.execute();
-                            track.append("\n<br>iBookingLimit > 0  onlyIU == 1 fillInsertInventoryIssues");
-                            fillInsertInventoryIssues(psSqlInsInventoryIssues, curDate, 0);
-                            psSqlInsInventoryIssues.execute();
-                        }
+            boolean isSharedAvailability=false; 
+            if(getUniqueAllotmentRooms().containsKey(sInvCode)) 
+                    isSharedAvailability=true; 
+            
+            //MapUtils.debugPrint(System.out, "room ="+sInvCode, getUniqueAllotmentRooms());
+             
+            if(isSharedAvailability){
+                System.out.println("-- Shared availability");
+                int res = doWithoutIU(dtStart,dtEnd); 
+            }else {    
+                System.out.println("-- Unique invenctory ");
+                //<editor-fold defaultstate="collapsed" desc="for IU">
+                for (int i = 0; i <= period; i++) {
+                    java.util.Date curDate = DateUtils.addDays(dtStart, i);
+                    String sCurDate = DateFormatUtils.format(curDate, "dd-MM-yyyy");
+                    
+                    int sumOfCMAllot = 0;
+                    try {
+                        sumOfCMAllot = new Integer(run.query(sqlInvent, new ScalarHandler("sum_of_allot"), invCode, curDate, INVENTORY_CM).toString());
+                    } catch (Exception e) {
+                        //
                     }
+                    
+                    int sumOfAvailTuttiListini = 0;
+                    try {
+                        sumOfAvailTuttiListini = new Integer(run.query(sqlAllot, new ScalarHandler("sum_of_avail"), invCode, curDate).toString());
+                    } catch (Exception e) {
+                        //
+                    }
+                    sumOfAvailTuttiListini = sumOfAvailTuttiListini + sumOfCMAllot;
+                    
+                    int sumOfAvailLp = 0;
+                    try {
+                        sumOfAvailLp = new Integer(run.query(sqlAllotLp, new ScalarHandler("sum_of_avail"), invCode, curDate, idListinoPrioritario).toString());
+                    } catch (Exception e) {
+                        //
+                    }
+                    int sumOfAvailAltriListini = sumOfAvailTuttiListini - sumOfAvailLp;
+                    
+                    int iBookingLimit = new Integer(bookingLimit);
+                    int curAllotment = iBookingLimit - sumOfAvailAltriListini;
+                    int onlyIU = 0; // cotrollo in riduzione
+                    
+                    if (curAllotment < 0 && iBookingLimit != 0) {
+                        onlyIU = 1;
+                        roomsData.put(sCurDate, sInvCode);
+                        //addWarning(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "InvCode " + sInvCode + " date " + sCurDate + ": BookingLimit less than priority inventory availability.");
+                    }
+                    onlyIU = 0;
+                    int xrpcresult = modifyAllotment( curDate, AVAIL_ACTION_SET,iBookingLimit,0);
+              
+                    if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
+                        Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Stop procedure " );
+                        return;
+                    }else if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_NO_VIRTUAL_ROOM) { //faccio insert a mano
+                        //<editor-fold defaultstate="collapsed" desc="execute allotment">
+                        
+                        if (iBookingLimit == 0) {
+                            bookingLimit0DoSaveIU(psSqlInsInventory,psSqlResetAllotment,curDate,today,iBookingLimit);
+                        } else { // solo inventario unico e tariffa prioritaria
+                            bookingLimitNot0DoSaveIU(
+                                    onlyIU,
+                                    iBookingLimit,
+                                    idListinoPrioritario,
+                                    curAllotment,
+                                    psSqlUpdInventoryIssues  ,
+                                    psSqlInsInventory  ,
+                                    psSqlInsAllotment  ,
+                                    psSqlUpdNormalRateRestrictions  ,
+                                    psSqlInsInventoryIssues  ,
+                                    today,
+                                    curDate
+                            );
+                        }
+//</editor-fold>
+                    }
+                    
                 }
+//</editor-fold>
+            } 
             
-            }
-            
-            
-            
-            
-            if (!roomsData.isEmpty() && sendEmail == 0) {
-                //Facilities.sendEmail(getCrContext("cr/url" + requestorID), structureName, structureEmail, roomsData);
-                //sendEmail = 1;
+            if (false && !roomsData.isEmpty() && sendEmail == 0) {
+                Facilities.sendEmail(getCrContext("cr/url" + requestorID), structureName, structureEmail, roomsData);
+                sendEmail = 1;
             }
         } catch (Exception e) {
             addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "SOAP Server. Insert data failed");
@@ -1104,7 +1053,132 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
         }
     }
     
+    private int doWithoutIU(java.util.Date dtStart ,java.util.Date dtEnd  ){
+        int iBookingLimit = new Integer(bookingLimit);
+        int xrpcresult = modifyAllotment( dtStart,dtEnd, AVAIL_ACTION_SET,iBookingLimit,0);
+         
+        if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "XRPC_SET_ALLOTMENT_RESULT_ERROR " ); 
+        }    
+        
+        return xrpcresult;
+    }
+    private void bookingLimitNot0DoSaveIU(
+        int onlyIU,
+        int iBookingLimit,
+        int idListinoPrioritario,
+        int curAllotment,
+        PreparedStatement psSqlUpdInventoryIssues  ,
+        PreparedStatement psSqlInsInventory  ,
+        PreparedStatement psSqlInsAllotment  ,
+        PreparedStatement psSqlUpdNormalRateRestrictions  ,
+        PreparedStatement psSqlInsInventoryIssues  ,
+        java.util.Date today,
+        java.util.Date curDate
+    )throws SQLException{
+        // Inventory IU
+         
+        Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Bookinglimit != 0 " );
+        fillInsertInventoryParameters(psSqlInsInventory, curDate, today, INVENTORY_IU, iBookingLimit);
+        psSqlInsInventory.execute();
+        
+        if (onlyIU == 0) { // Tariffa prioritaria
+             
+            fillUpdateInventoryIssues(psSqlUpdInventoryIssues, curDate, 1);
+            psSqlUpdInventoryIssues.execute();
+             
+            fillInsertAllotmentParameters(psSqlInsAllotment, curDate, new Integer(idListinoPrioritario).toString(), curAllotment); // listino prioritario
+            psSqlInsAllotment.execute();
+             
+            // aggiorna eventuali restrictions nel normal rate
+            try {
+                 
+                fillUpdateNormalRateRestrictions(psSqlUpdNormalRateRestrictions, curDate);
+                psSqlUpdNormalRateRestrictions.execute();
+                 
+            } catch (Exception e) {
+                System.out.println("psSqlUpdNormalRateRestrictions "+e.getMessage());
+                Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE,"psSqlUpdNormalRateRestrictions error ",e);
+            }
+        } else if (onlyIU == 1) { // aggiorna giorni errati
+             
+            fillUpdateInventoryIssues(psSqlUpdInventoryIssues, curDate, 1);
+            psSqlUpdInventoryIssues.execute();
+             
+            fillInsertInventoryIssues(psSqlInsInventoryIssues, curDate, 0);
+            psSqlInsInventoryIssues.execute();
+        }
+    }
+    
+    private void bookingLimit0DoSaveIU(
+            PreparedStatement psSqlInsInventory, 
+            PreparedStatement psSqlResetAllotment, 
+            java.util.Date curDate, 
+            java.util.Date today, 
+            int iBookingLimit) throws SQLException{
+         
+        Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Bookinglimit = 0 " );
+        // Inventory IU
+        fillInsertInventoryParameters(psSqlInsInventory, curDate, today, INVENTORY_IU, iBookingLimit);
+        psSqlInsInventory.execute();
+         
+        // Inventory CM
+        fillInsertInventoryParameters(psSqlInsInventory, curDate, today, INVENTORY_CM, iBookingLimit);
+        psSqlInsInventory.execute();
+
+        // tutti i listini
+        String listId = "1"; // normal rate
+        fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
+        psSqlResetAllotment.execute();
+         
+        listId = "2"; // special rate
+        fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
+        psSqlResetAllotment.execute();
+
+        // multilistini
+        List<Map<String, Object>> lMultirate = null;
+        String sqlMultirate = "SELECT multirate_id "
+                + " FROM multirate WHERE structure_id = ?";
+
+        try {
+             
+            lMultirate = run.query(sqlMultirate, new MapListHandler(), hotelCode);
+        } catch (SQLException e) {
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
+        }
+
+        if (lMultirate != null) {
+            for (Map<String, Object> multirate : lMultirate) {
+                listId = multirate.get("multirate_id").toString();
+                fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
+                psSqlResetAllotment.execute();
+            }
+        }
+
+        // ABS GATEWAY
+
+        try { 
+            updateAbsGateway( curDate); // boolean
+        } catch (SQLException e) {
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
+            addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "Error on update IDS");
+        } catch (Exception e) {
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
+            addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "Error on update structure " + e.getMessage());
+        }
+
+        // CM GATEWAY
+        try {
+             updateCMGateway(curDate);
+        } catch (Exception e) {
+        }
+                        
+    }
+    
     private int modifyAllotment(java.util.Date curDate,String action,int availability,int reservation){
+        return modifyAllotment(curDate, curDate, action, availability, reservation);
+    }
+    private int modifyAllotment(java.util.Date fromDate,java.util.Date toDate,String action,int availability,int reservation){
         Vector parameters=new Vector();   
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -1114,8 +1188,9 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
         parameters.add(new Integer(availability)); //4 disponibilità
         parameters.add(new Integer(reservation)); //5 prenotazione
         parameters.add(action); //6  Azione : set,increase,decrease
-        parameters.add(df.format(curDate).toString());  //7
-        parameters.add(df.format(curDate).toString());  //8
+        parameters.add(df.format(fromDate).toString());  //7
+        parameters.add(df.format(toDate).toString());  //8
+        
         Vector result = new Vector();
         int ret = XRPC_SET_ALLOTMENT_RESULT_ERROR;
         try { 
@@ -1127,22 +1202,24 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             return ret ;
         }
         
-        try { 
-            Map hret = (Map)result.get(0); 
-            ret = new Integer(  (String)hret.get("unique_allotment_service_response") );  
+        //<editor-fold defaultstate="collapsed" desc="unique_allotment_service_response">
+        try {
+            Map hret = (Map)result.get(0);
+            ret = new Integer(  (String)hret.get("unique_allotment_service_response") );
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "Xrpc done " );
-             
-            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "ret value " + ret );     
+            
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "ret value " + ret );
         } catch (NullPointerException e) {
-            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, "", e);    
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, "", e);
             return XRPC_SET_ALLOTMENT_RESULT_NO_VIRTUAL_ROOM ;
         } catch (ClassCastException e) {
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, "", e);
-            return XRPC_SET_ALLOTMENT_RESULT_NO_VIRTUAL_ROOM ;    
+            return XRPC_SET_ALLOTMENT_RESULT_NO_VIRTUAL_ROOM ;
         } catch (Exception e) {
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, "", e);
             return XRPC_SET_ALLOTMENT_RESULT_NO_VIRTUAL_ROOM ;
         }
+        //</editor-fold>
         
         return ret;
     }

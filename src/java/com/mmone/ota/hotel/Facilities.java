@@ -44,7 +44,9 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult; 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -573,6 +575,38 @@ public class Facilities {
         return doc;
     }
     
+    private static QueryRunner testDataSourceRunner() throws NamingException{
+        DataSource ds= Facilities.createDataSource("cmsonei_admin", "9ogDebokpinnAj", "jdbc:mysql://10.0.20.11:3306/cmsonei_abs2");
+        QueryRunner run = new QueryRunner(ds); 
+        
+        return run;
+    }
+    
+    public static Map<Object,Boolean> getUniqueAllotmentRooms(QueryRunner run,String hotelCode){ 
+        return getUniqueAllotmentRooms(  run, new Integer(hotelCode) );
+    }
+    public static Map<Object,Boolean> getUniqueAllotmentRooms(QueryRunner run,int hotelCode){ 
+        Map<Object,Boolean> ret = new  HashMap<Object,Boolean>();
+        try { 
+            String sql = "select room_id,room_code,room_unique_allotment from room where structure_id=?";
+            List<Map<String, Object>> rooms = run.query(sql, new MapListHandler(), hotelCode);
+            
+            for (int i = 0; i < rooms.size(); i++) {
+                Map<String, Object> room = rooms.get(i);
+                int roomUnique = (Integer) room.get("room_unique_allotment");
+                Boolean isUnique = (roomUnique ==1);
+                
+                if(isUnique){
+                    ret.put(room.get("room_id"), true);
+                    ret.put(room.get("room_code"), true);
+                }    
+            } 
+        } catch (SQLException ex) {
+            Logger.getLogger(Facilities.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
+    
     private static class MapEntryConverter implements Converter {
 
         public boolean canConvert(Class clazz) {
@@ -627,6 +661,22 @@ public class Facilities {
         return result;
     }
      
+    
+    public static void main(String[] args) {
+        
+        try {
+            QueryRunner run = testDataSourceRunner();
+            Map<Object,Boolean> rooms = getUniqueAllotmentRooms(run,"217");
+            
+            MapUtils.debugPrint(System.out, "rooms", rooms);
+            
+            System.out.println(  rooms.containsKey(1));
+            
+        } catch (NamingException ex) {
+            Logger.getLogger(Facilities.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
     
             
     
