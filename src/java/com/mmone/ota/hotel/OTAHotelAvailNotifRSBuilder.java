@@ -1040,10 +1040,10 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
 //</editor-fold>
             } 
             
-            if (false && !roomsData.isEmpty() && sendEmail == 0) {
+            /*if (false && !roomsData.isEmpty() && sendEmail == 0) {
                 Facilities.sendEmail(getCrContext("cr/url" + requestorID), structureName, structureEmail, roomsData);
                 sendEmail = 1;
-            }
+            }*/
         } catch (Exception e) {
             addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "SOAP Server. Insert data failed");
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
