@@ -594,7 +594,7 @@ public class Facilities {
             for (int i = 0; i < rooms.size(); i++) {
                 Map<String, Object> room = rooms.get(i);
                 int roomUnique = (Integer) room.get("room_unique_allotment");
-                Boolean isUnique = (roomUnique ==1);
+                Boolean isUnique = (roomUnique !=0);
                 
                 if(isUnique){
                     ret.put(room.get("room_id"), true);
