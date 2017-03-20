@@ -905,6 +905,18 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "     room_id = ? AND "
                     + "     thedate = ?";
             
+            String sqlUpdateNormalRateRestrictionsByDate = ""
+                    + " UPDATE allotment SET"
+                    + (isCheckIn ? "  lock_checkin = ?," : "")
+                    + (isCheckOut ? "  lock_checkout = ?," : "")
+                    + (isMinStay ? "     minstay = ?, " : "")
+                    + (isTheRelease ? "     therelease = ?, " : "")
+                    + " list_id = 1 "
+                    + " WHERE structure_id = ? AND "
+                    + "     list_id = 1 AND "
+                    + "     room_id = ? AND "
+                    + "     thedate between ? and ?   ";
+            
             String sqlAllotLp = sqlAllot + " AND list_id = ? ";
 //</editor-fold>
 
@@ -915,6 +927,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             PreparedStatement psSqlInsInventoryIssues = conn.prepareStatement(sqlInsertInventoryIssues);
             PreparedStatement psSqlUpdInventoryIssues = conn.prepareStatement(sqlUpdateInventoryIssues);
             PreparedStatement psSqlUpdNormalRateRestrictions = conn.prepareStatement(sqlUpdateNormalRateRestrictions);
+            PreparedStatement psSqlUpdNormalRateRestrictionsByDate = conn.prepareStatement(sqlUpdateNormalRateRestrictionsByDate);
             //</editor-fold>
             
             //<editor-fold defaultstate="collapsed" desc="listino prioritario">
@@ -967,7 +980,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
              
             if(isSharedAvailability){
                 System.out.println("-- Shared availability");
-                int res = doWithoutIU(dtStart,dtEnd); 
+                int res = doWithoutIU(dtStart,dtEnd,psSqlUpdNormalRateRestrictionsByDate); 
             }else {    
                 System.out.println("-- Unique invenctory ");
                 //<editor-fold defaultstate="collapsed" desc="for IU">
@@ -1017,7 +1030,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                         //<editor-fold defaultstate="collapsed" desc="execute allotment">
                         
                         if (iBookingLimit == 0) {
-                            bookingLimit0DoSaveIU(psSqlInsInventory,psSqlResetAllotment,curDate,today,iBookingLimit);
+                            bookingLimit0DoSaveIU(psSqlInsInventory,psSqlResetAllotment,psSqlUpdNormalRateRestrictions,curDate,today,iBookingLimit);
                         } else { // solo inventario unico e tariffa prioritaria
                             bookingLimitNot0DoSaveIU(
                                     onlyIU,
@@ -1052,15 +1065,24 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             DbUtils.commitAndCloseQuietly(conn);
         }
     }
+     
+                
     
-    private int doWithoutIU(java.util.Date dtStart ,java.util.Date dtEnd  ){
+    private int doWithoutIU(java.util.Date dtStart ,java.util.Date dtEnd ,PreparedStatement psSqlUpdNormalRateRestrictionsByDate ){
         int iBookingLimit = new Integer(bookingLimit);
         int xrpcresult = modifyAllotment( dtStart,dtEnd, AVAIL_ACTION_SET,iBookingLimit,0);
          
         if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "XRPC_SET_ALLOTMENT_RESULT_ERROR " ); 
         }    
-        
+         
+        try {
+            fillUpdateNormalRateRestrictions(psSqlUpdNormalRateRestrictionsByDate, dtStart,dtEnd);
+            psSqlUpdNormalRateRestrictionsByDate.execute();
+        } catch (SQLException ex) {
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+ 
         return xrpcresult;
     }
     private void bookingLimitNot0DoSaveIU(
@@ -1113,6 +1135,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
     private void bookingLimit0DoSaveIU(
             PreparedStatement psSqlInsInventory, 
             PreparedStatement psSqlResetAllotment, 
+            PreparedStatement psSqlUpdNormalRateRestrictions, 
             java.util.Date curDate, 
             java.util.Date today, 
             int iBookingLimit) throws SQLException{
@@ -1130,7 +1153,15 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
         String listId = "1"; // normal rate
         fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
         psSqlResetAllotment.execute();
-         
+        
+        try {
+            fillUpdateNormalRateRestrictions(psSqlUpdNormalRateRestrictions, curDate);
+            psSqlUpdNormalRateRestrictions.execute();
+
+        } catch (Exception e) {
+            System.out.println("psSqlUpdNormalRateRestrictions "+e.getMessage());
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE,"psSqlUpdNormalRateRestrictions error ",e);
+        }
         listId = "2"; // special rate
         fillInsertResetAllotment(psSqlResetAllotment, listId, curDate);
         psSqlResetAllotment.execute();
@@ -1284,6 +1315,34 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
          
     }
 
+    private void fillUpdateNormalRateRestrictions(PreparedStatement ps, java.util.Date startDate,java.util.Date endDate) throws SQLException {
+        int j = 1;
+         
+        Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.INFO, "[fillUpdateNormalRateRestrictions] 1- " + ps.toString());
+        if (isCheckIn) {
+            ps.setObject(j++, checkin);
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.INFO,  "J="+j + " checkin=" +checkin );
+        }
+        if (isCheckOut) {
+            ps.setObject(j++, checkout);
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.INFO,  "J="+j + " checkout=" +checkout );
+        }
+        if (isMinStay) {
+            ps.setObject(j++, lengthOfStay);
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.INFO,  "J="+j + " lengthOfStay=" +lengthOfStay );
+        }
+        if (isTheRelease) {
+            ps.setObject(j++, therelease);
+            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.INFO,  "J="+j + " therelease=" +therelease );
+        }
+         
+        ps.setObject(j++, hotelCode); 
+        ps.setObject(j++, invCode);
+        ps.setObject(j++, startDate);
+        ps.setObject(j++, endDate);
+    }
+    
+   
     private void fillUpdateNormalRateRestrictions(PreparedStatement ps, java.util.Date curDate) throws SQLException {
         int j = 1;
         
