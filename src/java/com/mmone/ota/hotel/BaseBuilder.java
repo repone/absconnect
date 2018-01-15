@@ -19,7 +19,7 @@ public class BaseBuilder {
      
     private int jndiVersion = 0;
     public int getJndiVersion() {  
-        Logger.getLogger(BaseBuilder.class.getName()).log(Level.INFO, "jndiVersion="+jndiVersion );
+        // Logger.getLogger(BaseBuilder.class.getName()).log(Level.INFO, "jndiVersion="+jndiVersion );
         //return jndiVersion;     
         return JNDIVER_101_AFTER_LIKE_ON_OTAUSERS;
     }

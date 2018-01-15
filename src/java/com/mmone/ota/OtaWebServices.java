@@ -215,10 +215,12 @@ public class OtaWebServices {
         }
          
         try {
+            XmlRpcClient rpcClient = getRpcClient(readRQMsg.getTarget(), requestorID);
             Boolean uiba = userIsBookingAllowed(  readRQMsg.getTarget(),   requestorID);  
             getRequest(wsc).setAttribute("ota.ws.initialContext", this.getContext() );
-            OTAResRetrieveRSBuilder builder =  new OTAResRetrieveRSBuilder(getDataSource(readRQMsg.getTarget(), requestorID), readRQMsg, wsc.getUserPrincipal().toString(), getRequest(wsc));            
+            OTAResRetrieveRSBuilder builder =  new OTAResRetrieveRSBuilder(getDataSource(readRQMsg.getTarget(), requestorID), readRQMsg, wsc.getUserPrincipal().toString(), getRequest(wsc), rpcClient);            
             builder.setInitialContext(getContext()); 
+            
             //builder.setPortalCode(   getPortalCode(wsc.getUserPrincipal().toString(), getContext())    );
             if(!uiba) builder.addError(Facilities.EWT_PROTOCOL_VIOLATION,Facilities.ERR_INVALID_REQUEST_CODE, CONNECTION_NEEDED);
             
@@ -272,9 +274,13 @@ public class OtaWebServices {
         Logger.getLogger(OtaWebServices.class.getName()).log(Level.INFO,  " otaNotifReport getUserPrincipal : " + wsc.getUserPrincipal().toString() );
         
         try {
+            XmlRpcClient rpcClient = getRpcClient(notifReportRQMsg.getTarget(), requestorID);
+            
             Boolean uiba = userIsBookingAllowed(  notifReportRQMsg.getTarget(),   requestorID);  
             OTANotifReportRSBuilder builder = new OTANotifReportRSBuilder(getDataSource(notifReportRQMsg.getTarget(), requestorID), notifReportRQMsg, wsc.getUserPrincipal().toString(), getRequest(wsc));
             if(!uiba) builder.addError(Facilities.EWT_PROTOCOL_VIOLATION,Facilities.ERR_INVALID_REQUEST_CODE, CONNECTION_NEEDED);
+            builder.setClient(rpcClient);
+            
             builder.setInitialContext(getContext()); 
             if (builder.getRes().getErrors() == null || builder.getRes().getErrors().getError().isEmpty()) {
                 res = builder.build();
@@ -787,6 +793,7 @@ public class OtaWebServices {
         return res;
     }
     public static void main(String[] args) {
+        
         Properties jndiProperties = new Properties();
             //jndiProperties.put("java.naming.provider.url","iiop://93.95.216.56:19437");
             

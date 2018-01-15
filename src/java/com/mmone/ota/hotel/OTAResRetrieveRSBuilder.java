@@ -1,6 +1,6 @@
 package com.mmone.ota.hotel;
  
-import static com.mmone.ota.hotel.Facilities.sRATE_CODES_MAP;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,6 +12,8 @@ import org.opentravel.ota._2003._05.WarningsType;
 import org.opentravel.ota._2003._05.WarningType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -21,8 +23,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource; 
 import javax.xml.bind.JAXBElement;
@@ -35,6 +35,9 @@ import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.commons.lang.time.DateUtils;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcException;
 import org.opentravel.ota._2003._05.AdditionalDetailType;
 import org.opentravel.ota._2003._05.AdditionalDetailsType;
 import org.opentravel.ota._2003._05.CommentType;
@@ -43,7 +46,6 @@ import org.opentravel.ota._2003._05.CompanyNameType;
 import org.opentravel.ota._2003._05.CountryNameType;
 import org.opentravel.ota._2003._05.CustomerType;
 import org.opentravel.ota._2003._05.DateTimeSpanType;
-import org.opentravel.ota._2003._05.DiscountType;
 import org.opentravel.ota._2003._05.GuaranteeType;
 import org.opentravel.ota._2003._05.GuestCountType;
 import org.opentravel.ota._2003._05.GuestCountType.GuestCount;
@@ -143,6 +145,16 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     private boolean reservationExist= false; 
     private int portalCode = Facilities.DEFAULTS_PORTAL_CODE;
     private boolean hasPortalCode = false;
+    private XmlRpcClient client = null;
+
+    public XmlRpcClient getClient() {
+        return client;
+    }
+
+    public void setClient(XmlRpcClient client) {
+        this.client = client;
+    }
+    
     
     public final void addError(String type, String code, String message) {
         if (res.getErrors() == null) {
@@ -178,9 +190,11 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
         Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.INFO, msg.toString());
     }
-    public OTAResRetrieveRSBuilder(DataSource ds,OTAReadRQ request, String user, HttpServletRequest httpRequest) {
+    
+    public OTAResRetrieveRSBuilder(DataSource ds,OTAReadRQ request, String user, HttpServletRequest httpRequest, XmlRpcClient client) {
         super();
-
+        this.setClient(client);
+        
         if (ds == null) {
             addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "SOAP Server. System Error. No connection with the database");
             return;
@@ -254,8 +268,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         res.setPrimaryLangID(langID);
         res.setVersion(version);
         res.setEchoToken(UUID.randomUUID().toString());
-        
-        
+     
         logData.put("Class" , this.getClass().getName());
         logData.put("TimeStamp", res.getTimeStamp().toString());
         logData.put("user", user);
@@ -372,35 +385,53 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         }
 
     }
+    private boolean useRpc = true;
+    
     private boolean isRequestComplete() {
         return (hotelCode != null && context_id != null);
     }
     private List<Map<String, Object>> loadReservationData() throws Exception {
         Integer iHotelCode = new Integer(hotelCode);
         List<Map<String, Object>> reservation = null;
+        boolean checkChannels = true;
+        if(this.downloadType.equals(DOWNLOAD_TYPE_ONLY_BOOKING)){
+            if(useRpc)
+                reservation=ReservationDownloadServices.retrieveReservationsOnlyBookingRPC(client, hotelCode, context_id, checkChannels);
+            else     
+                reservation=ReservationDownloadServices.retrieveReservationsOnlyBooking(ds, hotelCode, context_id,getPortalCode());
+        } else { 
+            if(useRpc)
+                reservation=ReservationDownloadServices.retrieveReservationsAllRPC(client, hotelCode, context_id, checkChannels);
+            else    
+                reservation=ReservationDownloadServices.retrieveReservations(ds, hotelCode, context_id,getPortalCode());
+        }
         
-        if(this.downloadType.equals(DOWNLOAD_TYPE_ONLY_BOOKING))
-            reservation=ReservationDownloadServices.retrieveReservationsOnlyBooking(ds, hotelCode, context_id,getPortalCode());
-        else 
-            reservation=ReservationDownloadServices.retrieveReservations(ds, hotelCode, context_id,getPortalCode());
-
         return reservation;
     }
+    
     private boolean fnReservationExist(String reservationNumber,Integer ihotelCode) throws Exception {
         String sql = "select count(*) as reservation_count from reservation where structure_id=? AND reservation_number = ?";
         Object countRes = run.query(sql, new ScalarHandler("reservation_count"), ihotelCode , reservationNumber);
         
         this.reservationExist=!countRes.toString().equals("0");
-          
         return this.reservationExist;
     }
     private void loadListiniData() throws Exception {
+        /**
         List<Map<String, Object>> lListino = run.query("SELECT * FROM list ORDER BY list_id", new MapListHandler());
         for (Map<String, Object> map : lListino) {
             listini.put(map.get("list_id"), map.get("list_name").toString());
         }
+        **/ 
+        
+        listini.put(1, "Normal rate");
+        listini.put(2, "Special rate");
+        
     }
 
+    private List<Map<String, Object>> loadReservationOtherData(Map<String, Object> reservation) {
+        return (List<Map<String, Object>>) reservation.get("reservation_detail");
+    }
     //Array con tutte le camere
     private List<Map<String, Object>> loadReservationOtherData(Integer reservationId) throws Exception {
         List<Map<String, Object>> reservationDetail = null;
@@ -420,6 +451,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         return reservationDetail;
     }
     
+    
     private List<Map<String, Object>> loadReservationEcommerce(Integer reservationId) throws Exception {
         List<Map<String, Object>> reservationDetail = null;
         if (reservationId == null) {
@@ -430,6 +462,10 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         }
 
         return reservationDetail;
+    }
+    
+    private List<Map<String, Object>> loadReservationGifts(Map<String, Object> reservation) {
+        return (List<Map<String, Object>>) reservation.get("reservation_gifts");
     }
     
     private List<Map<String, Object>> loadReservationGifts(Integer reservationId) throws Exception {
@@ -443,6 +479,10 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         return reservationDetail;
     }
     
+    private List<Map<String, Object>> loadReservationAcc(Map<String, Object> reservation) {
+        return (List<Map<String, Object>>) reservation.get("reservation_acc");
+    }
+    
     private List<Map<String, Object>> loadReservationAcc(Integer reservationId ,Integer reservationDetId ) throws Exception {
         List<Map<String, Object>> reservationDetail = null;
         if (reservationId == null) {
@@ -452,6 +492,10 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         }
 
         return reservationDetail;
+    }
+    
+    private List<Map<String, Object>> loadReservationRoomData(Map<String, Object> reservation) {
+        return (List<Map<String, Object>>) reservation.get("reservation_totals");
     }
     
     //Prezzo totale della camera
@@ -676,6 +720,19 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         }
         return res;
     }
+    
+    private Date objectToDate (Object dtObject) {
+        if(dtObject==null) {
+            return null;
+        } else {
+            try {
+                return DateUtils.parseDate(dtObject.toString(), null);
+            } catch (ParseException ex) {
+                return null;
+            }
+        }    
+    }
+    
     public OTAResRetrieveRS buildSingle(Map reservation, List<Map<String, Object>> reservationDetail, List<Map<String, Object>> reservationRoomData, List<HotelReservationType> lHotelReservations) {
         //-----------------
         //-----------------   prenotazione
@@ -687,7 +744,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             GregorianCalendar gc =  new GregorianCalendar(); 
             
             try{
-                XMLGregorianCalendar reservationOpenedDate = df.newXMLGregorianCalendar(gc);     
+                XMLGregorianCalendar reservationOpenedDate = df.newXMLGregorianCalendar(gc);
                 gc.setTimeInMillis(((Date)reservation.get("reservation_opened_date")).getTime());
                 hotelReservationType.setCreateDateTime(reservationOpenedDate);
             } catch (Exception ex1) { }
@@ -698,11 +755,13 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
                 
                 hotelReservationType.setLastModifyDateTime(reservationModDate);
                 
+                /*
                 Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.INFO, "----------  LastReservation date ----" );
                 Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.INFO, 
                         reservation.get("reservation_status_date").toString());
                 Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.INFO, 
                         ((Date)reservation.get("reservation_status_date")).toString()    );
+                */
                 
             } catch (Exception ex1) { 
                 Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.SEVERE,"----------  LastReservation date ----",ex1  );
@@ -722,8 +781,10 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
         if (reservation.get("reservation_id") != null) {
             UniqueIDType uniqueID = new UniqueIDType();
             uniqueID.setType(reservation.get("reservation_type").toString());
-            uniqueID.setID(reservation.get("reservation_id").toString());
+            
+            uniqueID.setID(reservation.get("new_reservation_id").toString() );
             uniqueID.setIDContext(context_id);
+                             
             hotelReservationType.getUniqueID().add(uniqueID);
         } else {
             addWarning(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_NO_RESERVATIONS_FOUND_FOR_SEARCH_CRITERIA, "No reservations found");
@@ -753,6 +814,8 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
         String rid = reservation.get("reservation_id").toString();
         String rnum = reservation.get("reservation_number").toString();
+        String rNewNum = reservation.get("new_reservation_number").toString();
+        
         String tmp = "1";
         BigInteger numberOfUnits = new BigInteger("1") ;   
         boolean ecommerceAdded=false;
@@ -771,13 +834,19 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
                 if (tmp.equals("0")) {
                     roomTypeType.setRoomTypeCode("0"); // manuale
                 } else {
-                    Map mCamera = run.query(
+                    
+                    if(useRpc){
+                        roomTypeType.setRoomTypeCode((String)resDetail.get("reservation_detail_code"));
+                    } else {
+                        Map mCamera = run.query(
                             "SELECT room_code FROM room WHERE room_id= ? AND structure_id = ?",
                             new MapHandler(),
                             tmp,
                             hotelCode);
 
-                    roomTypeType.setRoomTypeCode(mCamera.get("room_code").toString());
+                        roomTypeType.setRoomTypeCode(mCamera.get("room_code").toString());
+                    }
+                    
 
                 }
                 
@@ -860,13 +929,18 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
             Map mCamera = null;
             try {
-                mCamera = run.query(
+                
+                if(useRpc){
+                        roomRate.setRoomTypeCode((String)resDetail.get("reservation_detail_code"));
+                } else {
+                     mCamera = run.query(
                         "SELECT room_code FROM room WHERE room_id= ? AND structure_id = ?",
                         new MapHandler(),
                         tmp,
                         hotelCode);
 
-                roomRate.setRoomTypeCode(mCamera.get("room_code").toString());
+                    roomRate.setRoomTypeCode(mCamera.get("room_code").toString());
+                }
             } catch (Exception e) {
                 roomRate.setRoomTypeCode("0");
             }
@@ -903,6 +977,9 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             
             String sP = null;
             switch (rateId) {
+                case 0:
+                    sP = "Multirate";
+                    break;
                 case 1:
                     sP = "Normal rate";
                     break;
@@ -943,7 +1020,13 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             
             try {
                 Map treatment = run.query("SELECT reservation_detail_room_board FROM reservation_detail WHERE reservation_detail_id = ?", new MapHandler(), resDetail.get("reservation_detail_id").toString());
-                Map sTreatment = run.query("SELECT treatment_id FROM treatment WHERE treatment_code = ?", new MapHandler(), treatment.get("reservation_detail_room_board").toString());
+                 
+                
+                Map sTreatment = run.query(
+                    "SELECT treatment_id FROM treatment WHERE treatment_code = ?", 
+                    new MapHandler(), 
+                    (String)resDetail.get( "reservation_detail_room_board" )
+                );
 
                 Integer iTreatmentId = new Integer(sTreatment.get("treatment_id").toString());
                 String treatmentId = "" + Facilities.MM_TO_MPT[iTreatmentId.intValue()];
@@ -959,7 +1042,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             roomStay.setGuestCounts(new GuestCountType());
             roomStay.getGuestCounts().setIsPerRoom(Boolean.FALSE);
             
-            System.out.println( "Loading guests ...............");
+            // System.out.println( "Loading guests ...............");
             
             List<Map<String, Object>> guests = null;
             
@@ -992,14 +1075,14 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             
             
             if(guests==null){
-                System.out.println( "Guests = null");
+                // System.out.println( "Guests = null");
             }else{
-                System.out.println( "Guests count = " + guests.size() );
+                // System.out.println( "Guests count = " + guests.size() );
             }
             // calcola gli ospiti
             
             for (Map<String, Object> record : guests) {
-                System.out.println( " Map<String, Object> record : guests    ");
+                // System.out.println( " Map<String, Object> record : guests    ");
                 String fieldGuest = record.get("reservation_detail_room_guest").toString();
                 String[] temp = null;
 
@@ -1025,7 +1108,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
                 }
 
                 for (int i = 0; i < temp.length; i++) {
-                    System.out.println( " for (int i = 0; i < temp.length; i++) ");
+                    // System.out.println( " for (int i = 0; i < temp.length; i++) ");
                     GuestCount guestCount = new GuestCount();
                     String[] field = null;
                     field = temp[i].split(":");
@@ -1050,7 +1133,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
                     } else {
                         continue;
                     }
-                    System.out.println( " add(guestCount) "   );    
+                    // System.out.println( " add(guestCount) "   );    
                     roomStay.getGuestCounts().getGuestCount().add(guestCount);
                 }
             }
@@ -1206,7 +1289,8 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
         HotelReservationID hotelReservationID = new HotelReservationID();
         hotelReservationID.setResIDType("10");
-        hotelReservationID.setResIDValue(rnum);
+        //hotelReservationID.setResIDValue(rnum);
+        hotelReservationID.setResIDValue(rNewNum);
         hotelReservationID.setForGuest(Boolean.TRUE);
 
         hotelReservationType.getResGlobalInfo().setHotelReservationIDs(new HotelReservationIDsType());
@@ -1228,6 +1312,27 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     }
     public static void main(String[] args) {    
           
+        try {
+            XmlRpcClient client = new XmlRpcClient("http://reservation.cmsone.it/backend/manager/xmlrpc/ser.php");
+            client.setBasicAuthentication("otauser", "8eWruyEN");            
+            Object res = ReservationDownloadServices.retrieveReservationsAllRPC(
+                    client, "217", "test217ml", true
+            );
+            Map mapR = new Hashtable();
+            
+            mapR.put("a",res);
+            MapUtils.debugPrint(System.out, "", mapR);
+            
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (XmlRpcException ex) {
+            Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        if(1==2) return;
+        
         try {
             String tmpusr="S0003@unitas";
             

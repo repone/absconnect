@@ -4,12 +4,16 @@
  */
 package com.mmone.ota.hotel;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.NamingException;
@@ -21,6 +25,8 @@ import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcException;
 import org.opentravel.ota._2003._05.HotelReservationType;
 
 /**
@@ -49,15 +55,21 @@ public class ReservationDownloadServices {
             + "";
     public static final String SQL_INSERT_RESERVATION_DOWNLOADED_RECORD = ""
             + " INSERT INTO ota_reservation_download"
-            + " ( context_id, confirmation_number, reservation_id, last_check_date,creation_date )"
+            + " ( context_id, confirmation_number, reservation_id, reservation_ch_id, last_check_date,creation_date )"
             + " VALUES "
-            + " ( ?, ?, ?, ?, ?)"
+            + " ( ?, ?, ?, ?, ?, ?)"
             + "";
+  
+    
+    /*
+    ALTER TABLE cmsonei_abs2.ota_reservation_download
+    CHANGE reservation_id reservation_id VARCHAR(255) NOT NULL;
+    **/
     public static final String SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO = ""
             + " INSERT INTO ota_reservation_download"
-            + " ( context_id, confirmation_number, reservation_id, last_check_date,creation_date )"
+            + " ( context_id, confirmation_number, reservation_id, reservation_ch_id, last_check_date,creation_date )"
             + " VALUES "
-            + " ( ?, ?, ?,  (SELECT MAX(reservation_status_date) FROM reservation_status WHERE reservation_status.reservation_id=?)   ,  ?)"
+            + " ( ?, ?, ?, ?,  CURRENT_TIMESTAMP   ,  CURRENT_TIMESTAMP)"
             + "";
     public static final String SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD = ""
             + " UPDATE ota_reservation_download"
@@ -70,11 +82,12 @@ public class ReservationDownloadServices {
     public static final String SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD_AUTO = ""
             + " UPDATE ota_reservation_download"
             + " SET "
-            + " last_check_date=(SELECT MAX(reservation_status_date) FROM reservation_status WHERE reservation_status.reservation_id=?) "
+            + " last_check_date=CURRENT_TIMESTAMP "
             + " WHERE "
             + " context_id=? "
             + " AND reservation_id=? "
             + "";
+    
         public static final String SQL_SELECT_DOWNLOADED_RECORDS_BY_TOKEN = ""
             + " SELECT * "
             + " FROM  "
@@ -187,22 +200,82 @@ public class ReservationDownloadServices {
             throw e;
         }
     }
-
+ //carica le prenotazioni
+    public static List<Map<String, Object>> retrieveReservations(DataSource ds, String hotelCode, Object contextId,int portalId) throws SQLException {
+        QueryRunner run = new QueryRunner(ds);
+        return run.query(SELECT_RESERVATIONS, new MapListHandler(), contextId, hotelCode,portalId);
+    }
     //carica id prenotazioni
     public static List<Object> retrieveReservationsId(DataSource ds, String hotelCode, Object contextId,int portalId) throws SQLException {
         QueryRunner run = new QueryRunner(ds);
         return run.query(SELECT_RESERVATIONS, new ColumnListHandler("reservation_id"), contextId, hotelCode,portalId);
     }
     
+    public static List<Map<String, Object>> retrieveReservationsByRpc(
+        XmlRpcClient client, 
+        boolean onlyBooking, 
+        String hotelCode, 
+        String contextId,
+        boolean onlyId,
+        boolean checkChannels
+    ) throws XmlRpcException, IOException {
+        Vector result = new Vector();
+        Vector parameters = new Vector();
+
+        parameters.add(new Integer(hotelCode)); 
+        parameters.add(contextId);
+        
+        if(onlyId) parameters.add("reservation_id"); 
+        else parameters.add("*"); 
+        
+        if(onlyBooking) parameters.add(new Integer(1)); 
+        else parameters.add(new Integer(0)); 
+        
+        if(checkChannels) parameters.add(new Integer(1)); 
+        else parameters.add(new Integer(0)); 
+        
+        result = (Vector) client.execute("backend.getOTAReservations", parameters);         
+        return new ArrayList<Map<String, Object>>(result);
+    }
     //carica le prenotazioni
-    public static List<Map<String, Object>> retrieveReservations(DataSource ds, String hotelCode, Object contextId,int portalId) throws SQLException {
-        QueryRunner run = new QueryRunner(ds);
-        return run.query(SELECT_RESERVATIONS, new MapListHandler(), contextId, hotelCode,portalId);
+    
+    public static List<Map<String, Object>> retrieveReservationsIdByRpc(
+        XmlRpcClient client,  
+        String hotelCode, 
+        String contextId,
+        boolean checkChannels,
+        boolean onlyBooking 
+    ) throws XmlRpcException, IOException  {
+        boolean onlyId = true;
+        return retrieveReservationsByRpc(client, onlyBooking, hotelCode, contextId, onlyId, checkChannels);
     }
     
+    //carica le prenotazioni
     public static List<Map<String, Object>> retrieveReservationsOnlyBooking(DataSource ds, String hotelCode, Object contextId,int portalId) throws SQLException {
         QueryRunner run = new QueryRunner(ds);
         return run.query(SELECT_RESERVATIONS_ONLY_BOOKING, new MapListHandler(), contextId, hotelCode,portalId);
+    }
+    //carica le prenotazioni rpc
+    public static List<Map<String, Object>> retrieveReservationsOnlyBookingRPC(
+        XmlRpcClient client,  
+        String hotelCode, 
+        String contextId,
+        boolean checkChannels
+    ) throws XmlRpcException, IOException {
+        boolean onlyBooking = true; 
+        boolean onlyId = false;
+        return retrieveReservationsByRpc(client, onlyBooking, hotelCode, contextId, onlyId, checkChannels);
+    }
+    //carica le prenotazioni rpc
+    public static List<Map<String, Object>> retrieveReservationsAllRPC(
+        XmlRpcClient client,  
+        String hotelCode, 
+        String contextId,
+        boolean checkChannels
+    ) throws XmlRpcException, IOException {
+        boolean onlyBooking = false; 
+        boolean onlyId = false;
+        return retrieveReservationsByRpc(client, onlyBooking, hotelCode, contextId, onlyId, checkChannels);
     }
     
     public static List<Map<String, Object>> retrieveReservationsNoPortalId(DataSource ds, String hotelCode, Object contextId) throws SQLException {
@@ -248,6 +321,47 @@ public class ReservationDownloadServices {
 
     }
 
+    public static List<Map<String, Object>> retrieveDownloadedRecordsRpc(
+            String token, 
+            XmlRpcClient client,
+            DataSource ds
+            ) throws Exception, DownloadRequestNotFoundException, SQLException, DownloadRequestMalformedException {
+
+        QueryRunner qr = new QueryRunner(ds);
+        Map dwnRecs = qr.query(SQL_SELECT_DOWNLOADED_RECORDS_BY_TOKEN, new MapHandler(), token);
+
+        if (dwnRecs == null || dwnRecs.size() == 0) {
+            throw new DownloadRequestNotFoundException("Download request not found for token " + token);
+        }
+
+        String hotelCode = (String) dwnRecs.get("hotel_code");
+        Object contextId = dwnRecs.get("context_id");
+
+        if (hotelCode == null) {
+            throw new DownloadRequestMalformedException("HotelCode is null");
+        }
+
+        if (contextId == null) {
+            throw new DownloadRequestMalformedException("CONTEXT_ID is null");
+        }
+        
+        List<Map<String, Object>> reservations = null;
+        try { 
+            reservations = retrieveReservationsAllRPC(
+              client, 
+              hotelCode, 
+              (String)contextId,
+              true
+            );
+        } catch (Exception e) {
+            throw e;
+        }
+
+        return reservations;
+
+    }
+
+    
     public static List<Map<String, Object>> retrieveDownloadedRecords(
             String hotelCode,
             Object contextId,
@@ -335,8 +449,9 @@ public class ReservationDownloadServices {
     //crea o aggiorna un record della tabella delle prenotazioni scaricate.
 
     public static void insertOrUpdateDownloadRecordCommitRequired(
-            DataSource ds, Object contextId, String confirmationNumber, Object reservationId, Timestamp lastCheckDate) throws Exception {
+            DataSource ds, Object contextId, String confirmationNumber, Object newReservationId, Timestamp lastCheckDate) throws Exception {
 
+        
         QueryRunner qr = new QueryRunner(ds);
         Timestamp today = new Timestamp(new java.util.Date().getTime());
         
@@ -348,23 +463,29 @@ public class ReservationDownloadServices {
         } else { 
             confirm = confirmationNumber.substring(0, 30);
         } 
+        
+        Object reservationId = reservationIdWithChannelToReservationId(newReservationId);
+        // Logger.getLogger(ReservationDownloadServices.class.getName()).log(Level.INFO, "--- reservationId = " + reservationId.toString());
+        
         try {
+            // if (lastCheckDate == null)  lastCheckDate = today; 
             if (lastCheckDate == null) {
-                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, confirm, reservationId, reservationId, today);
+                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, confirm, reservationId, newReservationId);
             } else {
-                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD, contextId, confirm, reservationId, lastCheckDate, today);
+                qr.update(SQL_INSERT_RESERVATION_DOWNLOADED_RECORD, contextId, confirm, reservationId, newReservationId, lastCheckDate, today);
             }
             return;
         } catch (SQLException e) {
             /*errore se record esiste già*/
-            //System.err.println("SQLIntegrityConstraintViolationException" );
+            Logger.getLogger(ReservationDownloadServices.class.getName()).log(Level.SEVERE, e.getMessage());
         } catch (Exception e) {
             throw e;
         }
 
         try {
+            // if (lastCheckDate == null)  lastCheckDate = today; 
             if (lastCheckDate == null) {
-                qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD_AUTO, reservationId, contextId, reservationId);
+                qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD_AUTO, reservationId, contextId);
             } else {
                 qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD, lastCheckDate, contextId, reservationId);
             }
@@ -374,6 +495,56 @@ public class ReservationDownloadServices {
 
     }
 
+    public static Map<String, Object> setReservationsAsDownloadedRpc(XmlRpcClient client, DataSource ds, String token, String confirmation_number,String resIdType) throws Exception {
+        List<Map<String, Object>> reservetions = retrieveDownloadedRecordsRpc(token, client,ds);
+        Map<String, Object> dw = ReservationDownloadServices.retrieveContextAndHotelCOdeByToken(ds, token);
+
+        //Connection conn = ds.getConnection();
+        //conn.setAutoCommit(false);
+        int resTokenCounter=0;
+        if(resIdType.equals(  Facilities.RESID_TYPE_PMS    )){
+            for (Map<String, Object> record : reservetions){ 
+                resTokenCounter++;
+                if(resTokenCounter>ReservationDownloadServices.DOWNLOAD_LIMIT)
+                    break;
+                
+                String newResId = (String)record.get("new_reservation_id");
+                
+                // insertOrUpdateDownloadRecordCommitRequired(ds, dw.get("context_id"), confirmation_number, record.get("reservation_id"));     
+                insertOrUpdateDownloadRecordCommitRequired(
+                        ds, 
+                        dw.get("context_id"), 
+                        confirmation_number, 
+                        newResId);     
+                
+            }
+            deleteReservationRequestRecordCommitRequired(ds, token);
+        }else{
+            for (Map<String, Object> record : reservetions) {
+                resTokenCounter++;
+                if(resTokenCounter>ReservationDownloadServices.DOWNLOAD_LIMIT)
+                    break;
+                String resNumber =  (String) record.get("new_reservation_number");
+                
+                if(confirmation_number.equals( resNumber ) ){
+                    Logger.getLogger(ReservationDownloadServices.class.getName()).log(Level.INFO, "--- found reservation = " + resNumber );
+                    // insertOrUpdateDownloadRecordCommitRequired(ds, dw.get("context_id"), confirmation_number, record.get("reservation_id"));
+                    insertOrUpdateDownloadRecordCommitRequired(ds, dw.get("context_id"), confirmation_number, record.get("new_reservation_id"));
+                    if(reservetions.size()==1)
+                        deleteReservationRequestRecordCommitRequired(ds, token);
+                    break;
+                }    
+            } 
+        }
+        
+        
+
+        //DbUtils.close(conn);
+        //DbUtils.commitAndCloseQuietly(conn);
+        return dw;
+    }
+
+    
     public static Map<String, Object> setReservationsAsDownloaded(DataSource ds, String token, String confirmation_number,String resIdType) throws Exception {
         List<Map<String, Object>> reservetions = retrieveDownloadedRecords(token, ds);
         Map<String, Object> dw = ReservationDownloadServices.retrieveContextAndHotelCOdeByToken(ds, token);
@@ -411,9 +582,75 @@ public class ReservationDownloadServices {
         return dw;
     }
 
+    public static Object reservationIdWithChannelToReservationId(Object reservationId){ 
+        String sReservationId = reservationId.toString();
+        String [] aReservationId = sReservationId.split("-");
+        if(aReservationId.length==1){
+            //
+        } else {
+            reservationId = new Integer("-"+aReservationId[1]);
+        }
+        return reservationId;
+    }
+    
     public static void main(String[] args) {
+        /**
+         * 
+            ALTER TABLE cmsonei_abs2_20171204.ota_reservation_download
+            CHANGE reservation_id reservation_id VARCHAR(255) NOT NULL;
+         */
+        
+        Object reservationId = "126-134050134";
+        
+        reservationId = reservationIdWithChannelToReservationId(reservationId);
+        
+        
+        System.out.println("reservationId " + reservationId);
+        
+        if(1==1) return;
+        
+        
+        DataSource ds;             
+        try {
+            ds = Facilities.createDataSource("root", "123abcD", "jdbc:mysql://10.0.20.16:3306/cmsonei_abs2_20171204");
+            
+            Map ret = retrieveContextAndHotelCOdeByToken(ds, "4ce75c91-be1f-4939-b1ef-e49a66ecdf3f");       
+            
+            //DataSource ds, Object contextId, String confirmationNumber, Object reservationId
+            insertOrUpdateDownloadRecordCommitRequired(ds,"test217ml", "h/01/ml217","100-52034");
+             
+            
+            MapUtils.debugPrint(System.out, "", ret);
+            
+            
+            
+            
+        } catch (NamingException ex) {
+            Logger.getLogger(ReservationDownloadServices.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(ReservationDownloadServices.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            Logger.getLogger(ReservationDownloadServices.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+        
+        if(1==1) return;
+        
         try {  
-            DataSource ds= Facilities.createDataSource("absaja_user", "Nim9ofdekyozEp", "jdbc:mysql://93.95.221.43:3306/absaja_db");             
+            Vector a = new Vector();
+            Map rec = new HashMap(); rec.put("a",1); rec.put("b",2); rec.put("c",3); a.add(rec);
+            rec = new HashMap(); rec.put("a",1); rec.put("b",2); rec.put("c",3); a.add(rec);
+            rec = new HashMap(); rec.put("a",1); rec.put("b",2); rec.put("c",3); a.add(rec);
+            
+            List<Map<String, Object>>l = new ArrayList(a);
+            Map p = new HashMap();
+            p.put("1", l);
+            
+            MapUtils.debugPrint(System.out, "", p);
+            
+            
+            if(1==1) return;
+            ds= Facilities.createDataSource("absaja_user", "Nim9ofdekyozEp", "jdbc:mysql://93.95.221.43:3306/absaja_db");             
             QueryRunner run = new QueryRunner(ds);
              
             String sql =  "SELECT reservation_status from reservation where reservation_number=?";

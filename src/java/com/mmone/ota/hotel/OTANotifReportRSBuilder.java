@@ -14,6 +14,7 @@ import org.opentravel.ota._2003._05.WarningType;
 import javax.sql.DataSource;
 import javax.xml.datatype.DatatypeConfigurationException;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.xmlrpc.XmlRpcClient;
 import org.opentravel.ota._2003._05.OTANotifReportRQ;
 import org.opentravel.ota._2003._05.MessageAcknowledgementType;
 import org.opentravel.ota._2003._05.SuccessType;
@@ -30,7 +31,16 @@ public class OTANotifReportRSBuilder  extends BaseBuilder{
     private String target = Facilities.TARGET_PRODUCTION;
     private BigDecimal version = new BigDecimal(Facilities.VERSION);
     private Map<String,String> logData = new LinkedHashMap<String, String>();
-     
+    private XmlRpcClient client = null;
+
+    public XmlRpcClient getClient() {
+        return client;
+    }
+
+    public void setClient(XmlRpcClient client) {
+        this.client = client;
+    } 
+    
     public void addError(String type, String code, String message) {
         if (res.getErrors() == null) {
             res.setErrors(new ErrorsType());
@@ -160,7 +170,7 @@ public class OTANotifReportRSBuilder  extends BaseBuilder{
         Logger.getLogger(OTANotifReportRSBuilder.class.getName()).log(Level.INFO, "token="+token);
         
         try {
-            Map dw = ReservationDownloadServices.setReservationsAsDownloaded(ds , token, confirmation_number,resIdType);
+            Map dw = ReservationDownloadServices.setReservationsAsDownloadedRpc(client,ds , token, confirmation_number,resIdType);
         } catch (Exception ex) {
             addError(Facilities.EWT_UNKNOWN, Facilities.ERR_INVALID_VALUE, "EchoToken is invalid");
             Logger.getLogger(OTANotifReportRSBuilder.class.getName()).log(Level.SEVERE, null, ex);
