@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -427,6 +428,12 @@ public class ReservationDownloadServices {
     }
     // inserisce un record di richiesta di download delle prenotazioni.
 
+    public static List<Map<String, Object>> loadReservationOtherData(Map<String, Object> reservation) {
+        Map res = (Map)reservation.get("reservation_details");
+        Collection values = res.values();
+        ArrayList ret = new ArrayList(values);
+        return ret;
+    }
     public static void insertDownloadRequestRecordCommitRequired(
             DataSource ds, String requestToken, String hotelCode, Object contextId) throws Exception {
 
@@ -485,9 +492,9 @@ public class ReservationDownloadServices {
         try {
             // if (lastCheckDate == null)  lastCheckDate = today; 
             if (lastCheckDate == null) {
-                qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD_AUTO, reservationId, contextId);
+                qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD_AUTO, contextId, newReservationId);
             } else {
-                qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD, lastCheckDate, contextId, reservationId);
+                qr.update(SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD, lastCheckDate, contextId, newReservationId);
             }
         } catch (Exception e) {
             throw e;

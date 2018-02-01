@@ -146,6 +146,7 @@ public class Facilities {
     
     public static final Map<Integer, Integer> RATE_MAP = new HashMap<Integer, Integer>();
     static {
+         RATE_MAP.put(0, OTA_RPT_1);
         RATE_MAP.put(1, OTA_RPT_1);
         RATE_MAP.put(2, OTA_RPT_2);
     }

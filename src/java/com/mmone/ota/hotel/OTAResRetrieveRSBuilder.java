@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -430,7 +431,10 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     }
 
     private List<Map<String, Object>> loadReservationOtherData(Map<String, Object> reservation) {
-        return (List<Map<String, Object>>) reservation.get("reservation_detail");
+        Map res = (Map)reservation.get("reservation_details");
+        Collection values = res.values();
+        ArrayList ret = new ArrayList(values);
+        return ret;
     }
     //Array con tutte le camere
     private List<Map<String, Object>> loadReservationOtherData(Integer reservationId) throws Exception {
@@ -465,7 +469,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     }
     
     private List<Map<String, Object>> loadReservationGifts(Map<String, Object> reservation) {
-        return (List<Map<String, Object>>) reservation.get("reservation_gifts");
+        return (List<Map<String, Object>>) reservation.get("reservation_details_gifts");
     }
     
     private List<Map<String, Object>> loadReservationGifts(Integer reservationId) throws Exception {
@@ -495,7 +499,8 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
     }
     
     private List<Map<String, Object>> loadReservationRoomData(Map<String, Object> reservation) {
-        return (List<Map<String, Object>>) reservation.get("reservation_totals");
+        List<Map<String, Object>> res = (List<Map<String, Object>>)reservation.get("reservation_details_totals");
+        return res;
     }
     
     //Prezzo totale della camera
@@ -682,10 +687,11 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
                 }
                    
                 try{
-                    List<Map<String, Object>> reservationDetails = loadReservationOtherData(reservationId);
-                    List<Map<String, Object>> reservationRoomData = loadReservationRoomData(reservationId);
+                    List<Map<String, Object>> reservationDetails = loadReservationOtherData(reservation);
+                    List<Map<String, Object>> reservationRoomData = loadReservationRoomData(reservation);
                     buildSingle(reservation, reservationDetails, reservationRoomData, lHotelReservations);
                 }catch(Exception e){
+                    e.printStackTrace();
                     Logger.getLogger( OTAResRetrieveRSBuilder.class.getName() )
                             .log(
                                 Level.SEVERE
@@ -858,7 +864,7 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
                 AdditionalDetailsType addDets = new AdditionalDetailsType(); 
                  
                  
-                List<Map<String, Object>> resGifts = loadReservationGifts(tmpReservationId);
+                List<Map<String, Object>> resGifts = loadReservationGifts(reservation);
                 for (Map<String, Object> gift : resGifts) {
                     try { 
                         roomStay.setDiscountCode((String) gift.get("reservation_detail_name"));
@@ -1002,7 +1008,9 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             ParagraphType p = new ParagraphType();
             p.setName("Text");
             JAXBElement eP = null;
-                     
+                   
+            // Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.INFO,"rateId="+ rateId);
+            
             if (rateId > 2) {
                 ratePlan.setRatePlanType(Integer.toString(Facilities.OTA_RPT_3)); // Tipo di listino
                 ratePlan.setRatePlanCode(Facilities.sRATE_CODES_MAP.get(3));
@@ -1018,20 +1026,25 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
             ratePlan.setRatePlanDescription(p); 
             ratePlan.setMealsIncluded(new RatePlanType.MealsIncluded());
             
+            Integer iTreatmentId = 1;
+            String treatmentId = null;
             try {
-                Map treatment = run.query("SELECT reservation_detail_room_board FROM reservation_detail WHERE reservation_detail_id = ?", new MapHandler(), resDetail.get("reservation_detail_id").toString());
-                 
+                //Map treatment = run.query("SELECT reservation_detail_room_board FROM reservation_detail WHERE reservation_detail_id = ?", new MapHandler(), resDetail.get("reservation_detail_id").toString());
+              
                 
                 Map sTreatment = run.query(
                     "SELECT treatment_id FROM treatment WHERE treatment_code = ?", 
                     new MapHandler(), 
                     (String)resDetail.get( "reservation_detail_room_board" )
                 );
-
-                Integer iTreatmentId = new Integer(sTreatment.get("treatment_id").toString());
-                String treatmentId = "" + Facilities.MM_TO_MPT[iTreatmentId.intValue()];
+                 
+                if(resDetail.get("treatment_id")!=null)
+                    iTreatmentId = new Integer(resDetail.get("treatment_id").toString());
+                
+                treatmentId = "" + Facilities.MM_TO_MPT[iTreatmentId.intValue()];
                 ratePlan.getMealsIncluded().getMealPlanCodes().add(treatmentId);
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
+                
                 addError(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_BOARD_BASIS_OR_MEAL_PLAN_INVALID, "Error searching Meals");
                 Logger.getLogger(OTAResRetrieveRSBuilder.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -1263,6 +1276,8 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
         // imposta il prezzo totale della camera compresa di servizi/riduzioni
         for (Map<String, Object> resRoomData : reservationRoomData) {
+            Object oresRoomData = resRoomData;
+            
             roomStays.get(i++).getTotal().setAmountAfterTax(new BigDecimal(resRoomData.get("reservation_detail_price").toString()));
         }
         
