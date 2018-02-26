@@ -276,18 +276,22 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
 
             bookingLimitMessageType = request.getAvailStatusMessages().getAvailStatusMessage().get(index).getBookingLimitMessageType();
 
-
-
         } catch (Exception e) {
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.SEVERE, null, e);
-            addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "SOAP Server. System Error: " + e.getMessage());
+            // addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "SOAP Server. System Error: " + e.getMessage());
         }
 
         if (bookingLimit == null) {
-            addError(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_MANDATORY_BOOKING_DETAILS_MISSING, "BookingLimit null");
+            bookingLimit = "-1";
+            // addError(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_MANDATORY_BOOKING_DETAILS_MISSING, "BookingLimit null");
+        }
+        
+        if (bookingLimitMessageType == null) {
+            bookingLimit = "SetLimit";
         }
         if (bookingLimitMessageType == null) {
-            addError(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_MANDATORY_BOOKING_DETAILS_MISSING, "BookingLimitMessageType null");
+            
+            // addError(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_MANDATORY_BOOKING_DETAILS_MISSING, "BookingLimitMessageType null");
         } else {
             //if(bookingLimitMessageType.equals("RemoveLimit")) saveAllotment=false; // tutte le disponibilità di tutti i listini vanno messi a zero compresi i CM
             if (bookingLimitMessageType.equals("SetLimit")) {
@@ -666,8 +670,6 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
         } catch (Exception ex) {
             addError(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "SOAP Server. System Error: " + ex.getMessage());
         }
-
-
     }
 
     private void doDeleteFactory() {
@@ -976,9 +978,10 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             if(getUniqueAllotmentRooms().containsKey(sInvCode)) 
                     isSharedAvailability=true; 
             
+            int iBookingLimit = new Integer(bookingLimit);
             //MapUtils.debugPrint(System.out, "room ="+sInvCode, getUniqueAllotmentRooms());
              
-            if(isSharedAvailability){
+            if(isSharedAvailability || iBookingLimit < 0){
                 System.out.println("-- Shared availability");
                 int res = doWithoutIU(dtStart,dtEnd,psSqlUpdNormalRateRestrictionsByDate); 
             }else {    
@@ -1011,7 +1014,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     }
                     int sumOfAvailAltriListini = sumOfAvailTuttiListini - sumOfAvailLp;
                     
-                    int iBookingLimit = new Integer(bookingLimit);
+                    
                     int curAllotment = iBookingLimit - sumOfAvailAltriListini;
                     int onlyIU = 0; // cotrollo in riduzione
                     
@@ -1021,6 +1024,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                         //addWarning(Facilities.EWT_UNKNOWN, Facilities.ERR_SYSTEM_ERROR, "InvCode " + sInvCode + " date " + sCurDate + ": BookingLimit less than priority inventory availability.");
                     }
                     onlyIU = 0;
+                    
                     int xrpcresult = modifyAllotment( curDate, AVAIL_ACTION_SET,iBookingLimit,0);
               
                     if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
@@ -1070,12 +1074,15 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
     
     private int doWithoutIU(java.util.Date dtStart ,java.util.Date dtEnd ,PreparedStatement psSqlUpdNormalRateRestrictionsByDate ){
         int iBookingLimit = new Integer(bookingLimit);
-        int xrpcresult = modifyAllotment( dtStart,dtEnd, AVAIL_ACTION_SET,iBookingLimit,0);
-         
-        if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
-            Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "XRPC_SET_ALLOTMENT_RESULT_ERROR " ); 
-        }    
-         
+        int xrpcresult = 0 ;
+        
+        if(iBookingLimit>=0) {
+            xrpcresult = modifyAllotment( dtStart,dtEnd, AVAIL_ACTION_SET,iBookingLimit,0);
+
+            if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
+                Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "XRPC_SET_ALLOTMENT_RESULT_ERROR " ); 
+            }    
+        } 
         try {
             fillUpdateNormalRateRestrictions(psSqlUpdNormalRateRestrictionsByDate, dtStart,dtEnd);
             psSqlUpdNormalRateRestrictionsByDate.execute();
