@@ -78,7 +78,7 @@ public class ReservationDownloadServices {
             + " last_check_date=? "
             + " WHERE "
             + " context_id=? "
-            + " AND reservation_id=? "
+            + " AND reservation_ch_id=? "
             + "";
     public static final String SQL_UPDATE_RESERVATION_DOWNLOADED_RECORD_AUTO = ""
             + " UPDATE ota_reservation_download"
@@ -86,7 +86,7 @@ public class ReservationDownloadServices {
             + " last_check_date=CURRENT_TIMESTAMP "
             + " WHERE "
             + " context_id=? "
-            + " AND reservation_id=? "
+            + " AND reservation_ch_id=? "
             + "";
     
         public static final String SQL_SELECT_DOWNLOADED_RECORDS_BY_TOKEN = ""
