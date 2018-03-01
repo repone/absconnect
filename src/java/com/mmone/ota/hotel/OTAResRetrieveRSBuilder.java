@@ -903,14 +903,16 @@ public class OTAResRetrieveRSBuilder  extends BaseBuilder{
 
             // prezzo totale della camera compreso servizi e riduzioni/supplementi
             TotalType totalType = new TotalType();
-
-            try {
-                totalType.setCurrencyCode("EUR");
-                roomStay.setTotal(totalType);
+            totalType.setCurrencyCode("EUR");
+            
+            try {             
+                totalType.setAmountAfterTax(new BigDecimal(resDetail.get("reservation_detail_price").toString()));                
             } catch (Exception e) {
+                totalType.setAmountAfterTax(new BigDecimal(0));
                 addWarning(Facilities.EWT_REQUIRED_FIELD_MISSING, Facilities.ERR_PRICE_CANNOT_BE_VALIDATED, "Price invalid");
             }
 
+            roomStay.setTotal(totalType);
             //-----------------   roomrates
             roomStay.setRoomRates(new RoomRates());
             roomStay.setRatePlans(new org.opentravel.ota._2003._05.RoomStayType.RatePlans());
