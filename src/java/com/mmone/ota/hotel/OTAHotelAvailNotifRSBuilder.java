@@ -661,10 +661,10 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                 doSaveIU(period);
             }else{
               
-                /* String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
+                String sqlMl = "select multirate_id from multirate where multirate_code=? and structure_id=?";
                 Integer rateId=null;  
                 rateId = (Integer) run.query(sqlMl, new ScalarHandler("multirate_id"), sRatePlanCode, hotelCode);
-                doSaveIU(period); */
+                doSaveIU(period); 
             }
 
         } catch (Exception ex) {
@@ -907,7 +907,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + "     room_id = ? AND "
                     + "     thedate = ?";
             
-            String sqlUpdateNormalRateRestrictionsByDate = ""
+            String sqlUpdateNormalRateRestrictionsByDate_ori = ""
                     + " UPDATE allotment SET"
                     + (isCheckIn ? "  lock_checkin = ?," : "")
                     + (isCheckOut ? "  lock_checkout = ?," : "")
@@ -916,6 +916,18 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
                     + " list_id = 1 "
                     + " WHERE structure_id = ? AND "
                     + "     list_id = 1 AND "
+                    + "     room_id = ? AND "
+                    + "     thedate between ? and ?   ";
+            
+            String sqlUpdateNormalRateRestrictionsByDate = ""
+                    + " UPDATE allotment SET"
+                    + (isCheckIn ? "  lock_checkin = ?," : "")
+                    + (isCheckOut ? "  lock_checkout = ?," : "")
+                    + (isMinStay ? "     minstay = ?, " : "")
+                    + (isTheRelease ? "     therelease = ?, " : "")
+                    + " list_id = ? "
+                    + " WHERE structure_id = ? AND "
+                    + "     list_id = ? AND "
                     + "     room_id = ? AND "
                     + "     thedate between ? and ?   ";
             
@@ -1343,10 +1355,15 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.INFO,  "J="+j + " therelease=" +therelease );
         }
          
+        ps.setObject(j++, ratePlanCode); 
+        
         ps.setObject(j++, hotelCode); 
+        ps.setObject(j++, ratePlanCode); 
+        
         ps.setObject(j++, invCode);
         ps.setObject(j++, startDate);
         ps.setObject(j++, endDate);
+        
     }
     
    
@@ -1373,7 +1390,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
         
         ps.setObject(j++, curDate);
         ps.setObject(j++, hotelCode);
-        ps.setObject(j++, "1");
+        ps.setObject(j++, ratePlanCode);
         ps.setObject(j++, invCode);
         ps.setObject(j++, curDate);
     }
