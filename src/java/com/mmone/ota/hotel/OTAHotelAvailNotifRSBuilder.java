@@ -993,7 +993,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
             int iBookingLimit = new Integer(bookingLimit);
             //MapUtils.debugPrint(System.out, "room ="+sInvCode, getUniqueAllotmentRooms());
              
-            if(isSharedAvailability || iBookingLimit < 0){
+            if(isSharedAvailability || iBookingLimit < 0 || !sRatePlanCode.equals(RATE_PLAN_CODE_IU)){
                 System.out.println("-- Shared availability");
                 int res = doWithoutIU(dtStart,dtEnd,psSqlUpdNormalRateRestrictionsByDate); 
             }else {    
@@ -1089,7 +1089,7 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
         int xrpcresult = 0 ;
         
         if(iBookingLimit>=0) {
-            xrpcresult = modifyAllotment( dtStart,dtEnd, AVAIL_ACTION_SET,iBookingLimit,0);
+            xrpcresult = modifyAllotment( dtStart,dtEnd, AVAIL_ACTION_SET,iBookingLimit,0,false);
 
             if (xrpcresult == XRPC_SET_ALLOTMENT_RESULT_ERROR) {
                 Logger.getLogger(OTAHotelAvailNotifRSBuilder.class.getName()).log(Level.WARNING, "XRPC_SET_ALLOTMENT_RESULT_ERROR " ); 
@@ -1228,13 +1228,23 @@ public class OTAHotelAvailNotifRSBuilder extends BaseBuilder{
     private int modifyAllotment(java.util.Date curDate,String action,int availability,int reservation){
         return modifyAllotment(curDate, curDate, action, availability, reservation);
     }
+    
     private int modifyAllotment(java.util.Date fromDate,java.util.Date toDate,String action,int availability,int reservation){
+        return modifyAllotment(fromDate, toDate, action, availability, reservation, true);
+    }
+        
+    private int modifyAllotment(java.util.Date fromDate,java.util.Date toDate,String action,int availability,int reservation, boolean isIU){
         Vector parameters=new Vector();   
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-
+        int listId = -1;
+        
+        if(!isIU) {
+            listId = new Integer(ratePlanCode);
+        }
+        
         parameters.add(new Integer(hotelCode)); //1
         parameters.add(new Integer(invCode)); //2
-        parameters.add(new Integer(-1)); //3 offerta
+        parameters.add(listId); //3 offerta
         parameters.add(new Integer(availability)); //4 disponibilità
         parameters.add(new Integer(reservation)); //5 prenotazione
         parameters.add(action); //6  Azione : set,increase,decrease
