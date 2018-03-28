@@ -1,12 +1,3 @@
-dist/*
-build/*
-test/*
-web/*
-nbproject/*
-build.xml
-*.bak 
-/catalog.xml
+/nbproject/private/
 /build/
 /dist/
-/nbproject/
-/test/
